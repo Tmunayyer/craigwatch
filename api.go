@@ -9,7 +9,7 @@ import (
 )
 
 type api interface {
-	handleMonitorURL(w http.ResponseWriter, r *http.Request)
+	handleMonitorURL(w http.ResponseWriter, r *http.Request) error
 }
 
 // env (environment) will house global references. Endpoints will be methods
@@ -21,7 +21,7 @@ type handlerEnv struct {
 // representation of an endpoint as a struct
 type endpoint struct {
 	path    string
-	handler func(w http.ResponseWriter, r *http.Request, e *handlerEnv)
+	handler func(w http.ResponseWriter, r *http.Request, e *handlerEnv) error
 }
 
 func initializeAPI() {
@@ -38,7 +38,7 @@ func initializeAPI() {
 		},
 	} {
 		http.HandleFunc(ep.path, func(w http.ResponseWriter, r *http.Request) {
-			ep.handler(w, r, &environment)
+			err := ep.handler(w, r, &environment)
 		})
 	}
 }
