@@ -47,7 +47,7 @@ func TestMonitorURL(t *testing.T) {
 
 	t.Run("post - should return data", func(t *testing.T) {
 		// create a new request
-		request, err := http.NewRequest(http.MethodPost, "/players/Pepper", nil)
+		request, err := http.NewRequest(http.MethodPost, "/api/monitorurl", nil)
 		assert.NoError(t, err)
 		// recorder to pass to spy on response
 		response := httptest.NewRecorder()

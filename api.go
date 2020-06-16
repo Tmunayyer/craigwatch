@@ -60,14 +60,57 @@ func internalError(e error, w http.ResponseWriter, r *http.Request) {
 }
 
 func handleMonitorURL(w http.ResponseWriter, r *http.Request, e *handlerEnv) {
-	w.WriteHeader(200)
+	type requestBody struct {
+		URL string
+	}
+
+	type responseObj struct {
+		Status      string
+		Description string
+		Searched    string
+		Results     []craigslist.Listing
+	}
+
 	switch r.Method {
 	case "POST":
-		listings, err := e.cl.GetListings(r.Context(), "https://sfbay.craigslist.org/d/antiques/search/ata")
-		internalError(err, w, r)
+		d := json.NewDecoder(r.Body)
+		body := requestBody{}
+		err := d.Decode(&body)
+		if err != nil {
+			w.WriteHeader(500)
+			data, err := json.Marshal(responseObj{
+				Status:      "ERROR",
+				Description: "Body is missing...",
+			})
+			if err != nil {
+				fmt.Println(err)
+				w.WriteHeader(500)
+				return
+			}
+			w.Write(data)
+			return
+		}
 
-		data, err := json.Marshal(listings)
-		internalError(err, w, r)
+		listings, err := e.cl.GetListings(r.Context(), body.URL)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+			return
+		}
+
+		resObj := responseObj{
+			Status:      "OK",
+			Description: "",
+			Searched:    body.URL,
+			Results:     listings,
+		}
+
+		data, err := json.Marshal(resObj)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+			return
+		}
 
 		w.Write(data)
 	default:
