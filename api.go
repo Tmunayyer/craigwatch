@@ -8,20 +8,15 @@ import (
 	craigslist "github.com/tmunayyer/go-craigslist"
 )
 
-func initializeAPI() {
-	cl := craigslist.NewClient("newyork")
-	api := newAPIService(cl)
-
-	http.HandleFunc("/api/monitorurl", api.handleMonitorURL)
-}
-
 type apiService struct {
 	cl craigslist.Client
+	db connection
 }
 
-func newAPIService(cl craigslist.Client) *apiService {
+func newAPIService(cl craigslist.Client, db connection) *apiService {
 	api := apiService{
 		cl: cl,
+		db: db,
 	}
 
 	return &api

@@ -55,12 +55,31 @@ func (m *mockCraigslistClient) GetListings(ctx context.Context, url string) ([]c
 	return fakeListings, nil
 }
 
+type mockDBClient struct {
+}
+
+func (m *mockDBClient) connect() error {
+	return nil
+}
+func (m *mockDBClient) shutdown() error {
+	return nil
+}
+
+func (m *mockDBClient) testConnection() error {
+	return nil
+}
+
+func (m *mockDBClient) applySchema() error {
+	return nil
+}
+
 func TestMonitorURL(t *testing.T) {
 	mockCL := mockCraigslistClient{
 		location: "newyork",
 	}
+	mockDB := mockDBClient{}
 
-	api := newAPIService(&mockCL)
+	api := newAPIService(&mockCL, &mockDB)
 
 	t.Run("post - no body passed", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "/", http.NoBody)
