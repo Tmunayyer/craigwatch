@@ -71,7 +71,7 @@ func (m *mockDBClient) applySchema() error {
 	return nil
 }
 func (m *mockDBClient) saveURL(data craigslistQuery) (craigslistQuery, error) {
-	return craigslistQuery{}, nil
+	return craigslistQuery{ID: 1, Email: data.Email, URL: data.URL, Confirmed: false}, nil
 }
 
 func TestMonitorURL(t *testing.T) {
@@ -121,10 +121,13 @@ func TestMonitorURL(t *testing.T) {
 	t.Run("post - recieves data", func(t *testing.T) {
 		// make a body
 		type body struct {
-			URL string
+			ID        int
+			Email     string
+			URL       string
+			Confirmed bool
 		}
 
-		b := body{URL: "www.anything.com"}
+		b := body{Email: "testing@gmail.com", URL: "www.anything.com"}
 		data, err := json.Marshal(b)
 		assert.NoError(t, err)
 		reader := bytes.NewReader(data)
@@ -136,23 +139,22 @@ func TestMonitorURL(t *testing.T) {
 		// call handelr
 		api.handleMonitorURL(res, req)
 
+		resBody := body{}
+		readBodyInto(t, res.Body, &resBody)
+
 		assert.Equal(t, http.StatusOK, res.Code)
-
-		// just check for the pids
-		responseData := struct {
-			Searched string
-			Results  []craigslist.Listing
-		}{}
-
-		// put body into a slice
-		responseBytes, err := ioutil.ReadAll(res.Body)
-		assert.NoError(t, err)
-		err = json.Unmarshal(responseBytes, &responseData)
-		assert.NoError(t, err)
-
-		for i, listing := range responseData.Results {
-			assert.Equal(t, fakeListings[i].DataPID, listing.DataPID)
-		}
-
+		assert.Equal(t, b.Email, resBody.Email)
+		assert.Equal(t, b.URL, resBody.URL)
+		assert.Equal(t, false, resBody.Confirmed)
 	})
+}
+
+// NOTE: before debugging here, make sure destination field are public
+func readBodyInto(t *testing.T, b *bytes.Buffer, destination interface{}) {
+	t.Helper()
+
+	bodyBytes, err := ioutil.ReadAll(b)
+	assert.NoError(t, err)
+	err = json.Unmarshal(bodyBytes, destination)
+	assert.NoError(t, err)
 }

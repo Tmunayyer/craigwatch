@@ -99,13 +99,13 @@ func (c *client) applySchema() error {
 // =======================
 
 type craigslistQuery struct {
-	id        int
-	email     string
-	url       string
-	confirmed bool
-	interval  int
-	createdOn string
-	polledOn  string
+	ID        int
+	Email     string
+	URL       string
+	Confirmed bool
+	Interval  int
+	CreatedOn string
+	PolledOn  string
 }
 
 // =======================
@@ -121,7 +121,7 @@ func (c *client) saveURL(data craigslistQuery) (craigslistQuery, error) {
 		values
 			($1, $2, $3)
 		returning *
-	`, data.email, data.url, false)
+	`, data.Email, data.URL, false)
 	defer rows.Close()
 
 	if err != nil {
