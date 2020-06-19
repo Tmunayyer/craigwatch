@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	// postgres driver
 	_ "github.com/lib/pq"
@@ -104,8 +105,7 @@ type craigslistQuery struct {
 	URL       string
 	Confirmed bool
 	Interval  int
-	CreatedOn string
-	PolledOn  string
+	CreatedOn time.Time
 }
 
 // =======================
@@ -117,9 +117,9 @@ func (c *client) saveURL(data craigslistQuery) (craigslistQuery, error) {
 
 	rows, err := c.db.Query(`
 		insert into monitor
-			(email, url, confirmed)
+			(email, url, confirmed, created_on)
 		values
-			($1, $2, $3)
+			($1, $2, $3, Now())
 		returning *
 	`, data.Email, data.URL, false)
 	defer rows.Close()
@@ -129,7 +129,14 @@ func (c *client) saveURL(data craigslistQuery) (craigslistQuery, error) {
 	}
 
 	for rows.Next() {
-		err := rows.Scan(&output)
+		err := rows.Scan(
+			&output.ID,
+			&output.Email,
+			&output.URL,
+			&output.Confirmed,
+			&output.Interval,
+			&output.CreatedOn,
+		)
 		if err != nil {
 			return output, err
 		}

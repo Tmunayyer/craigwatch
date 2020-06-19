@@ -3,7 +3,6 @@ create table if not exists monitor (
     email text,
     "url" text,
     confirmed boolean,
-    interval integer,
-    created_on  timestamptz,
-	polled_on timestamptz
+    interval integer default 60000,
+    created_on  timestamptz
 );
