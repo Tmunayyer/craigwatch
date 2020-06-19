@@ -17,6 +17,7 @@ type connection interface {
 	testConnection() error
 	applySchema() error
 	saveURL(craigslistQuery) (craigslistQuery, error)
+	getAllURL() ([]craigslistQuery, error)
 }
 
 type client struct {
@@ -140,6 +141,50 @@ func (c *client) saveURL(data craigslistQuery) (craigslistQuery, error) {
 		if err != nil {
 			return output, err
 		}
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
+}
+
+func (c *client) getAllURL() ([]craigslistQuery, error) {
+	output := []craigslistQuery{}
+
+	rows, err := c.db.Query(`
+		select
+			id,
+			email,
+			url,
+			confirmed,
+			interval,
+			created_on
+		from 
+			monitor
+	`)
+
+	if err != nil {
+		return output, err
+	}
+
+	for rows.Next() {
+		q := craigslistQuery{}
+		err := rows.Scan(
+			&q.ID,
+			&q.Email,
+			&q.URL,
+			&q.Confirmed,
+			&q.Interval,
+			&q.CreatedOn,
+		)
+		if err != nil {
+			return output, err
+		}
+
+		output = append(output, q)
 	}
 
 	err = rows.Err()

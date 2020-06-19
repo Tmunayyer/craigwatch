@@ -73,6 +73,9 @@ func (m *mockDBClient) applySchema() error {
 func (m *mockDBClient) saveURL(data craigslistQuery) (craigslistQuery, error) {
 	return craigslistQuery{ID: 1, Email: data.Email, URL: data.URL, Confirmed: false}, nil
 }
+func (m *mockDBClient) getAllURL() ([]craigslistQuery, error) {
+	return []craigslistQuery{}, nil
+}
 
 func TestMonitorURL(t *testing.T) {
 	mockCL := mockCraigslistClient{

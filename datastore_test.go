@@ -40,3 +40,23 @@ func TestSaveURL(t *testing.T) {
 	assert.False(t, record.Confirmed)
 	assert.Less(t, 0, record.ID)
 }
+
+func TestGetAllURL(t *testing.T) {
+	c, teardown, err := setupDBTestCase(t)
+	assert.NoError(t, err)
+	defer teardown(t)
+
+	args := craigslistQuery{
+		Email: "TESTING@gmail.com",
+		URL:   "www.TESTING.com",
+	}
+
+	_, err = c.saveURL(args)
+	assert.NoError(t, err)
+
+	records, err := c.getAllURL()
+	assert.NoError(t, err)
+
+	assert.Equal(t, args.URL, records[0].URL)
+
+}
