@@ -76,6 +76,9 @@ func (m *mockDBClient) saveURL(data craigslistQuery) (craigslistQuery, error) {
 func (m *mockDBClient) getAllURL() ([]craigslistQuery, error) {
 	return []craigslistQuery{}, nil
 }
+func (m *mockDBClient) deleteSearch(id int) error {
+	return nil
+}
 
 func TestMonitorURL(t *testing.T) {
 	mockCL := mockCraigslistClient{

@@ -18,6 +18,7 @@ type connection interface {
 	applySchema() error
 	saveURL(craigslistQuery) (craigslistQuery, error)
 	getAllURL() ([]craigslistQuery, error)
+	deleteSearch(id int) error
 }
 
 type client struct {
@@ -193,4 +194,19 @@ func (c *client) getAllURL() ([]craigslistQuery, error) {
 	}
 
 	return output, nil
+}
+
+func (c *client) deleteSearch(id int) error {
+	_, err := c.db.Query(`
+		delete from 
+			monitor
+		where
+			id = $1
+	`, id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

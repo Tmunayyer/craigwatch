@@ -39,6 +39,10 @@ func TestSaveURL(t *testing.T) {
 	assert.Equal(t, args.URL, record.URL)
 	assert.False(t, record.Confirmed)
 	assert.Less(t, 0, record.ID)
+
+	// remove the record
+	err = c.deleteSearch(record.ID)
+	assert.NoError(t, err)
 }
 
 func TestGetAllURL(t *testing.T) {
@@ -51,12 +55,41 @@ func TestGetAllURL(t *testing.T) {
 		URL:   "www.TESTING.com",
 	}
 
-	_, err = c.saveURL(args)
+	saved, err := c.saveURL(args)
 	assert.NoError(t, err)
 
 	records, err := c.getAllURL()
 	assert.NoError(t, err)
-
 	assert.Equal(t, args.URL, records[0].URL)
 
+	// delete the saved records
+	err = c.deleteSearch(saved.ID)
+	assert.NoError(t, err)
+}
+
+func TestDeleteSearch(t *testing.T) {
+	c, teardown, err := setupDBTestCase(t)
+	assert.NoError(t, err)
+	defer teardown(t)
+
+	args := craigslistQuery{
+		Email: "TESTING@gmail.com",
+		URL:   "www.TESTING.com",
+	}
+
+	saved, err := c.saveURL(args)
+	assert.NoError(t, err)
+
+	// delete the record
+	err = c.deleteSearch(saved.ID)
+	assert.NoError(t, err)
+
+	// make sure its gone
+	records, err := c.getAllURL()
+	assert.NoError(t, err)
+	for _, record := range records {
+		if record.ID == saved.ID {
+			t.Fail()
+		}
+	}
 }
