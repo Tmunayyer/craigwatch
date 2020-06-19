@@ -41,7 +41,7 @@ func (s *apiService) handleMonitorURL(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	_, err = s.db.saveURL(monitorRecord{
+	_, err = s.db.saveURL(craigslistQuery{
 		email: body.Email,
 		url:   body.URL,
 	})

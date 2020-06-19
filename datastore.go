@@ -15,7 +15,7 @@ type connection interface {
 	shutdown() error
 	testConnection() error
 	applySchema() error
-	saveURL(monitorRecord) (monitorRecord, error)
+	saveURL(craigslistQuery) (craigslistQuery, error)
 }
 
 type client struct {
@@ -98,7 +98,7 @@ func (c *client) applySchema() error {
 // ===== Models
 // =======================
 
-type monitorRecord struct {
+type craigslistQuery struct {
 	id        int
 	email     string
 	url       string
@@ -112,8 +112,8 @@ type monitorRecord struct {
 // ===== Queries
 // =======================
 
-func (c *client) saveURL(data monitorRecord) (monitorRecord, error) {
-	output := monitorRecord{}
+func (c *client) saveURL(data craigslistQuery) (craigslistQuery, error) {
+	output := craigslistQuery{}
 
 	rows, err := c.db.Query(`
 		insert into monitor
