@@ -8,112 +8,59 @@ import (
 	craigslist "github.com/tmunayyer/go-craigslist"
 )
 
-type api interface {
-	handleMonitorURL(w http.ResponseWriter, r *http.Request)
+func initializeAPI() {
+	cl := craigslist.NewClient("newyork")
+	api := newAPIService(cl)
+
+	http.HandleFunc("/api/monitorurl", api.handleMonitorURL)
 }
 
-// env (environment) will house global references. Endpoints will be methods
-// on the env to have access
-type handlerEnv struct {
+type apiService struct {
 	cl craigslist.Client
 }
 
-// representation of an endpoint as a struct
-type endpoint struct {
-	path    string
-	handler func(w http.ResponseWriter, r *http.Request, e *handlerEnv)
-}
-
-func initializeAPI() {
-	cl := craigslist.NewClient("newyork")
-
-	environment := handlerEnv{
+func newAPIService(cl craigslist.Client) *apiService {
+	api := apiService{
 		cl: cl,
 	}
 
-	for _, ep := range []endpoint{
-		{
-			path:    "/api/monitorurl",
-			handler: handleMonitorURL,
-		},
-	} {
-		http.HandleFunc(ep.path, func(w http.ResponseWriter, r *http.Request) {
-			ep.handler(w, r, &environment)
-		})
-	}
+	return &api
 }
 
-func defaultResponse(w http.ResponseWriter, r *http.Request) {
-	data, err := json.Marshal("unsupported method")
-	if err != nil {
-		fmt.Println("error in defaultResposne:", err)
-	}
-
-	w.Write(data)
-}
-
-func internalError(e error, w http.ResponseWriter, r *http.Request) {
-	if e != nil {
-		fmt.Println(e)
-		w.WriteHeader(500)
-	}
-}
-
-func handleMonitorURL(w http.ResponseWriter, r *http.Request, e *handlerEnv) {
+func (s *apiService) handleMonitorURL(w http.ResponseWriter, req *http.Request) {
 	type requestBody struct {
 		URL string
 	}
 
 	type responseObj struct {
-		Status      string
-		Description string
-		Searched    string
-		Results     []craigslist.Listing
+		Searched string
+		Results  []craigslist.Listing
 	}
 
-	switch r.Method {
-	case "POST":
-		d := json.NewDecoder(r.Body)
-		body := requestBody{}
-		err := d.Decode(&body)
-		if err != nil {
-			w.WriteHeader(500)
-			data, err := json.Marshal(responseObj{
-				Status:      "ERROR",
-				Description: "Body is missing...",
-			})
-			if err != nil {
-				fmt.Println(err)
-				w.WriteHeader(500)
-				return
-			}
-			w.Write(data)
-			return
-		}
-
-		listings, err := e.cl.GetListings(r.Context(), body.URL)
-		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(500)
-			return
-		}
-
-		resObj := responseObj{
-			Status:      "OK",
-			Description: "",
-			Searched:    body.URL,
-			Results:     listings,
-		}
-
-		data, err := json.Marshal(resObj)
-		if err != nil {
-			fmt.Println(err)
-			w.WriteHeader(500)
-			return
-		}
-
-		w.Write(data)
-	default:
-		defaultResponse(w, r)
+	d := json.NewDecoder(req.Body)
+	body := requestBody{}
+	err := d.Decode(&body)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("could not decode user payload: %v", err), http.StatusBadRequest)
+		return
 	}
+
+	listings, err := s.cl.GetListings(req.Context(), body.URL)
+	if err != nil {
+		http.Error(w, fmt.Sprint("url provided is not a compatible with craigslist"), http.StatusBadRequest)
+		return
+	}
+
+	resObj := responseObj{
+		Searched: body.URL,
+		Results:  listings,
+	}
+
+	data, err := json.Marshal(resObj)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("problems formatting the data: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(data)
 }
