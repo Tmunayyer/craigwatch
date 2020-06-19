@@ -15,6 +15,7 @@ type connection interface {
 	shutdown() error
 	testConnection() error
 	applySchema() error
+	saveURL(url) (url, error)
 }
 
 type client struct {
@@ -91,4 +92,53 @@ func (c *client) applySchema() error {
 	}
 
 	return nil
+}
+
+// =======================
+// ===== Models
+// =======================
+
+type url struct {
+	id        int
+	email     string
+	url       string
+	confirmed bool
+	interval  int
+	createdOn string
+	polledOn  string
+}
+
+// =======================
+// ===== Queries
+// =======================
+
+func (c *client) saveURL(data url) (url, error) {
+	output := url{}
+
+	rows, err := c.db.Query(`
+		insert into monitor
+			(email, url, confirmed)
+		values
+			($1, $2, $3)
+		returning *
+	`, data.email, data.url, false)
+	defer rows.Close()
+
+	if err != nil {
+		return output, err
+	}
+
+	for rows.Next() {
+		err := rows.Scan(&output)
+		if err != nil {
+			return output, err
+		}
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
 }

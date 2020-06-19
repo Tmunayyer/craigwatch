@@ -64,13 +64,14 @@ func (m *mockDBClient) connect() error {
 func (m *mockDBClient) shutdown() error {
 	return nil
 }
-
 func (m *mockDBClient) testConnection() error {
 	return nil
 }
-
 func (m *mockDBClient) applySchema() error {
 	return nil
+}
+func (m *mockDBClient) saveURL(data url) (url, error) {
+	return url{}, nil
 }
 
 func TestMonitorURL(t *testing.T) {
