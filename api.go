@@ -24,7 +24,8 @@ func newAPIService(cl craigslist.Client, db connection) *apiService {
 
 func (s *apiService) handleMonitorURL(w http.ResponseWriter, req *http.Request) {
 	type requestBody struct {
-		URL string
+		Email string
+		URL   string
 	}
 
 	type responseObj struct {
@@ -39,6 +40,16 @@ func (s *apiService) handleMonitorURL(w http.ResponseWriter, req *http.Request) 
 		http.Error(w, fmt.Sprintf("could not decode user payload: %v", err), http.StatusBadRequest)
 		return
 	}
+
+	_, err = s.db.saveURL(url{
+		email: body.Email,
+		url:   body.URL,
+	})
+	if err != nil {
+		http.Error(w, fmt.Sprintf("could not save the information: %v", err), http.StatusInternalServerError)
+	}
+	// TODO: refactgor this to return the db record instead of listings, this wont actually
+	// hit the craigslist api in the end when im done
 
 	listings, err := s.cl.GetListings(req.Context(), body.URL)
 	if err != nil {
