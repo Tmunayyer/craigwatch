@@ -70,8 +70,8 @@ func (m *mockDBClient) testConnection() error {
 func (m *mockDBClient) applySchema() error {
 	return nil
 }
-func (m *mockDBClient) saveURL(data url) (url, error) {
-	return url{}, nil
+func (m *mockDBClient) saveURL(data monitorRecord) (monitorRecord, error) {
+	return monitorRecord{}, nil
 }
 
 func TestMonitorURL(t *testing.T) {

@@ -15,7 +15,7 @@ type connection interface {
 	shutdown() error
 	testConnection() error
 	applySchema() error
-	saveURL(url) (url, error)
+	saveURL(monitorRecord) (monitorRecord, error)
 }
 
 type client struct {
@@ -98,7 +98,7 @@ func (c *client) applySchema() error {
 // ===== Models
 // =======================
 
-type url struct {
+type monitorRecord struct {
 	id        int
 	email     string
 	url       string
@@ -112,8 +112,8 @@ type url struct {
 // ===== Queries
 // =======================
 
-func (c *client) saveURL(data url) (url, error) {
-	output := url{}
+func (c *client) saveURL(data monitorRecord) (monitorRecord, error) {
+	output := monitorRecord{}
 
 	rows, err := c.db.Query(`
 		insert into monitor
