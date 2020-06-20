@@ -51,7 +51,7 @@ func (s *apiService) handleMonitorURL(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	record, err := s.db.saveURL(craigslistQuery{
+	record, err := s.db.saveSearch(clSearch{
 		Email: body.Email,
 		URL:   body.URL,
 	})

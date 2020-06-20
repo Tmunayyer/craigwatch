@@ -70,11 +70,11 @@ func (m *mockDBClient) testConnection() error {
 func (m *mockDBClient) applySchema() error {
 	return nil
 }
-func (m *mockDBClient) saveURL(data craigslistQuery) (craigslistQuery, error) {
-	return craigslistQuery{ID: 1, Email: data.Email, URL: data.URL, Confirmed: false}, nil
+func (m *mockDBClient) saveSearch(data clSearch) (clSearch, error) {
+	return clSearch{ID: 1, Email: data.Email, URL: data.URL, Confirmed: false}, nil
 }
-func (m *mockDBClient) getAllURL() ([]craigslistQuery, error) {
-	return []craigslistQuery{}, nil
+func (m *mockDBClient) getAllSearches() ([]clSearch, error) {
+	return []clSearch{}, nil
 }
 func (m *mockDBClient) deleteSearch(id int) error {
 	return nil
@@ -87,19 +87,6 @@ func TestMonitorURL(t *testing.T) {
 	mockDB := mockDBClient{}
 
 	api := newAPIService(&mockCL, &mockDB)
-
-	t.Run("post - no body passed", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodPost, "/", http.NoBody)
-		assert.NoError(t, err)
-		res := httptest.NewRecorder()
-
-		api.handleMonitorURL(res, req)
-
-		message, err := ioutil.ReadAll(res.Body)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-		assert.Equal(t, "could not decode user payload: EOF\n", string(message))
-	})
 
 	t.Run("post - invalid url", func(t *testing.T) {
 		// make a body

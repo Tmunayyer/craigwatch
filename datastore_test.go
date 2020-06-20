@@ -27,12 +27,12 @@ func TestSaveURL(t *testing.T) {
 	assert.NoError(t, err)
 	defer teardown(t)
 
-	args := craigslistQuery{
+	args := clSearch{
 		Email: "TESTING@gmail.com",
 		URL:   "www.TESTING.com",
 	}
 
-	record, err := c.saveURL(args)
+	record, err := c.saveSearch(args)
 	assert.NoError(t, err)
 
 	assert.Equal(t, args.Email, record.Email)
@@ -50,15 +50,15 @@ func TestGetAllURL(t *testing.T) {
 	assert.NoError(t, err)
 	defer teardown(t)
 
-	args := craigslistQuery{
+	args := clSearch{
 		Email: "TESTING@gmail.com",
 		URL:   "www.TESTING.com",
 	}
 
-	saved, err := c.saveURL(args)
+	saved, err := c.saveSearch(args)
 	assert.NoError(t, err)
 
-	records, err := c.getAllURL()
+	records, err := c.getAllSearches()
 	assert.NoError(t, err)
 	assert.Equal(t, args.URL, records[0].URL)
 
@@ -72,12 +72,12 @@ func TestDeleteSearch(t *testing.T) {
 	assert.NoError(t, err)
 	defer teardown(t)
 
-	args := craigslistQuery{
+	args := clSearch{
 		Email: "TESTING@gmail.com",
 		URL:   "www.TESTING.com",
 	}
 
-	saved, err := c.saveURL(args)
+	saved, err := c.saveSearch(args)
 	assert.NoError(t, err)
 
 	// delete the record
@@ -85,7 +85,7 @@ func TestDeleteSearch(t *testing.T) {
 	assert.NoError(t, err)
 
 	// make sure its gone
-	records, err := c.getAllURL()
+	records, err := c.getAllSearches()
 	assert.NoError(t, err)
 	for _, record := range records {
 		if record.ID == saved.ID {

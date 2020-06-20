@@ -11,14 +11,16 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// TODO: Cleanup this interface a bit, start centing things around table
+// TODO: rename montior/URL stuff to search
 type connection interface {
 	connect() error
 	shutdown() error
 	testConnection() error
 	applySchema() error
-	saveURL(craigslistQuery) (craigslistQuery, error)
-	getAllURL() ([]craigslistQuery, error)
+	saveSearch(clSearch) (clSearch, error)
 	deleteSearch(id int) error
+	getAllSearches() ([]clSearch, error)
 }
 
 type client struct {
@@ -101,7 +103,7 @@ func (c *client) applySchema() error {
 // ===== Models
 // =======================
 
-type craigslistQuery struct {
+type clSearch struct {
 	ID        int
 	Email     string
 	URL       string
@@ -114,8 +116,8 @@ type craigslistQuery struct {
 // ===== Queries
 // =======================
 
-func (c *client) saveURL(data craigslistQuery) (craigslistQuery, error) {
-	output := craigslistQuery{}
+func (c *client) saveSearch(data clSearch) (clSearch, error) {
+	output := clSearch{}
 
 	rows, err := c.db.Query(`
 		insert into monitor
@@ -152,8 +154,8 @@ func (c *client) saveURL(data craigslistQuery) (craigslistQuery, error) {
 	return output, nil
 }
 
-func (c *client) getAllURL() ([]craigslistQuery, error) {
-	output := []craigslistQuery{}
+func (c *client) getAllSearches() ([]clSearch, error) {
+	output := []clSearch{}
 
 	rows, err := c.db.Query(`
 		select
@@ -172,7 +174,7 @@ func (c *client) getAllURL() ([]craigslistQuery, error) {
 	}
 
 	for rows.Next() {
-		q := craigslistQuery{}
+		q := clSearch{}
 		err := rows.Scan(
 			&q.ID,
 			&q.Email,
