@@ -29,6 +29,8 @@ func initializeAPI() {
 		panic(err)
 	}
 
+	newPollingService(cl, db)
+
 	api := newAPIService(cl, db)
 
 	http.HandleFunc("/api/monitorurl", api.handleMonitorURL)
