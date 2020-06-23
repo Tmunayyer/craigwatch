@@ -9,12 +9,12 @@ import (
 )
 
 type apiService struct {
-	cl craigslist.Client
+	cl craigslist.API
 	db connection
 	ps pollingService
 }
 
-func newAPIService(cl craigslist.Client, db connection, ps pollingService) *apiService {
+func newAPIService(cl craigslist.API, db connection, ps pollingService) *apiService {
 	api := apiService{
 		cl: cl,
 		db: db,

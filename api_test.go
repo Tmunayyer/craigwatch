@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	craigslist "github.com/tmunayyer/go-craigslist"
@@ -48,6 +49,14 @@ func (m *mockCraigslistClient) FormatURL(term string, o craigslist.Options) stri
 }
 
 func (m *mockCraigslistClient) GetListings(ctx context.Context, url string) ([]craigslist.Listing, error) {
+	if url == badCraigslistURL {
+		return nil, fmt.Errorf("invalid url: %v", url)
+	}
+
+	return fakeListings, nil
+}
+
+func (m *mockCraigslistClient) GetNewListings(ctx context.Context, url string, date time.Time) ([]craigslist.Listing, error) {
 	if url == badCraigslistURL {
 		return nil, fmt.Errorf("invalid url: %v", url)
 	}

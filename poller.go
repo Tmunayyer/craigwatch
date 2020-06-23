@@ -16,12 +16,12 @@ type pollingService interface {
 }
 
 type pollingClient struct {
-	cl       craigslist.Client
+	cl       craigslist.API
 	db       connection
 	listings []craigslist.Listing
 }
 
-func newPollingService(cl craigslist.Client, db connection) pollingService {
+func newPollingService(cl craigslist.API, db connection) pollingService {
 	pc := pollingClient{
 		cl: cl,
 		db: db,
