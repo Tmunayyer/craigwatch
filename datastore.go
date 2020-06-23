@@ -31,18 +31,18 @@ type client struct {
 // newDBClient will return a connected client with reference to
 // the connection string. The connection string is constructed using
 // environment variables.
-func newDBClient() (connection, error) {
+func newDBClient() connection {
 	c := client{}
 	err := c.connect()
 	if err != nil {
-		return nil, fmt.Errorf("error connecting to pg: %v", err)
+		panic(err)
 	}
 	err = c.applySchema()
 	if err != nil {
-		return nil, fmt.Errorf("error applying schema: %v", err)
+		panic(err)
 	}
 
-	return &c, nil
+	return &c
 }
 
 // Connect to the database

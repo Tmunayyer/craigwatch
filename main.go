@@ -24,12 +24,9 @@ func main() {
 
 func initializeAPI() {
 	cl := craigslist.NewClient("newyork")
-	db, err := newDBClient()
-	if err != nil {
-		panic(err)
-	}
-	ps := newPollingService(cl, db)
+	db := newDBClient()
 
+	ps := newPollingService(cl, db)
 	api := newAPIService(cl, db, ps)
 
 	http.HandleFunc("/api/monitorurl", api.handleMonitorURL)

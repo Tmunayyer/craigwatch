@@ -9,10 +9,7 @@ import (
 func setupDBTestCase(t *testing.T) (connection, func(t *testing.T), error) {
 	t.Helper()
 
-	c, err := newDBClient()
-	if err != nil {
-		return nil, func(t *testing.T) {}, err
-	}
+	c := newDBClient()
 
 	teardown := func(t *testing.T) {
 		t.Helper()
