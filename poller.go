@@ -59,7 +59,10 @@ func (pc *pollingClient) push([]craigslist.Listing) error {
 }
 
 func (pc *pollingClient) flush() ([]craigslist.Listing, error) {
-	return []craigslist.Listing{}, nil
+	newRecords := pc.listings
+	pc.listings = []craigslist.Listing{}
+
+	return newRecords, nil
 }
 
 func (pc *pollingClient) poll(ctx context.Context, url string) {
