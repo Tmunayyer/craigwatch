@@ -12,7 +12,6 @@ type pollingService interface {
 	initiate(context.Context) error
 	shutdown() error
 	poll(ctx context.Context, url string)
-	push([]craigslist.Listing) error
 	flush() ([]craigslist.Listing, error)
 }
 
@@ -51,10 +50,6 @@ func (pc *pollingClient) initiate(ctx context.Context) error {
 }
 
 func (pc *pollingClient) shutdown() error {
-	return nil
-}
-
-func (pc *pollingClient) push([]craigslist.Listing) error {
 	return nil
 }
 
