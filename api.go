@@ -11,12 +11,14 @@ import (
 type apiService struct {
 	cl craigslist.Client
 	db connection
+	ps pollingService
 }
 
-func newAPIService(cl craigslist.Client, db connection) *apiService {
+func newAPIService(cl craigslist.Client, db connection, ps pollingService) *apiService {
 	api := apiService{
 		cl: cl,
 		db: db,
+		ps: ps,
 	}
 
 	return &api
@@ -65,6 +67,39 @@ func (s *apiService) handleMonitorURL(w http.ResponseWriter, req *http.Request) 
 		apiErrorHandler(w, http.StatusInternalServerError, "handleMonitorURL", "problems formatting the data", err)
 		return
 	}
+
+	w.Write(data)
+}
+
+func (s *apiService) handleNewListings(w http.ResponseWriter, req *http.Request) {
+	type resObject struct {
+		hasNewListings bool
+		listings       []craigslist.Listing
+	}
+	listings, err := s.ps.flush()
+	if err != nil {
+		apiErrorHandler(w, http.StatusInternalServerError, "handleNewListings", "problems retrieving polled data", err)
+		return
+	}
+
+	// no new listings yet
+	if len(listings) == 0 {
+		data, err := json.Marshal(resObject{
+			hasNewListings: false,
+		})
+		if err != nil {
+			apiErrorHandler(w, http.StatusInternalServerError, "handleNewListings", "problems formatting the data", err)
+			return
+		}
+
+		w.Write(data)
+		return
+	}
+
+	data, err := json.Marshal(resObject{
+		hasNewListings: true,
+		listings:       listings,
+	})
 
 	w.Write(data)
 }
