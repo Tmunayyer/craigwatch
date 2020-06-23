@@ -80,13 +80,39 @@ func (m *mockDBClient) deleteSearch(id int) error {
 	return nil
 }
 
-func TestMonitorURL(t *testing.T) {
+type mockPollingService struct {
+	listings []craigslist.Listing
+}
+
+func (m *mockPollingService) initiate(context.Context) error {
+	return nil
+}
+func (m *mockPollingService) shutdown() error {
+	return nil
+}
+func (m *mockPollingService) poll(ctx context.Context, url string) {
+	// note: copy requires destination to have a predefined length
+	listings := make([]craigslist.Listing, len(fakeListings))
+	copy(listings, fakeListings)
+	m.listings = listings
+}
+func (m *mockPollingService) flush() ([]craigslist.Listing, error) {
+	return m.listings, nil
+}
+
+func setupTestAPI(t *testing.T) *apiService {
+	t.Helper()
 	mockCL := mockCraigslistClient{
 		location: "newyork",
 	}
 	mockDB := mockDBClient{}
+	mockPS := mockPollingService{}
 
-	api := newAPIService(&mockCL, &mockDB)
+	return newAPIService(&mockCL, &mockDB, &mockPS)
+}
+
+func TestMonitorURL(t *testing.T) {
+	api := setupTestAPI(t)
 
 	t.Run("post - invalid url", func(t *testing.T) {
 		// make a body
@@ -139,6 +165,47 @@ func TestMonitorURL(t *testing.T) {
 		assert.Equal(t, b.Email, resBody.Email)
 		assert.Equal(t, b.URL, resBody.URL)
 		assert.Equal(t, false, resBody.Confirmed)
+	})
+}
+
+func TestHandleNewListings(t *testing.T) {
+	api := setupTestAPI(t)
+
+	type body struct {
+		HasNewListings bool
+		Listings       []craigslist.Listing
+	}
+
+	t.Run("get - should NOT return new listings", func(t *testing.T) {
+		// this test case basically rides off the fact that initializing the
+		// mock clients will retrieve no new listings
+
+		req, err := http.NewRequest(http.MethodPost, "/", nil)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
+
+		api.handleNewListings(res, req)
+
+		resBody := body{}
+		readBodyInto(t, res.Body, &resBody)
+
+		assert.False(t, resBody.HasNewListings)
+	})
+
+	t.Run("get - should return new listings", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, "/", nil)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
+
+		// before making the request, call poll to add some listings
+		api.ps.poll(context.Background(), "anything.com")
+
+		api.handleNewListings(res, req)
+
+		resBody := body{}
+		readBodyInto(t, res.Body, &resBody)
+
+		assert.True(t, resBody.HasNewListings)
 	})
 }
 

@@ -73,8 +73,8 @@ func (s *apiService) handleMonitorURL(w http.ResponseWriter, req *http.Request) 
 
 func (s *apiService) handleNewListings(w http.ResponseWriter, req *http.Request) {
 	type resObject struct {
-		hasNewListings bool
-		listings       []craigslist.Listing
+		HasNewListings bool
+		Listings       []craigslist.Listing
 	}
 	listings, err := s.ps.flush()
 	if err != nil {
@@ -83,9 +83,9 @@ func (s *apiService) handleNewListings(w http.ResponseWriter, req *http.Request)
 	}
 
 	// no new listings yet
-	if len(listings) == 0 {
+	if len(listings) < 1 {
 		data, err := json.Marshal(resObject{
-			hasNewListings: false,
+			HasNewListings: false,
 		})
 		if err != nil {
 			apiErrorHandler(w, http.StatusInternalServerError, "handleNewListings", "problems formatting the data", err)
@@ -97,9 +97,13 @@ func (s *apiService) handleNewListings(w http.ResponseWriter, req *http.Request)
 	}
 
 	data, err := json.Marshal(resObject{
-		hasNewListings: true,
-		listings:       listings,
+		HasNewListings: true,
+		Listings:       listings,
 	})
+	if err != nil {
+		apiErrorHandler(w, http.StatusInternalServerError, "handleNewListings", "problems formatting the data", err)
+		return
+	}
 
 	w.Write(data)
 }
