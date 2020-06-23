@@ -28,10 +28,10 @@ func initializeAPI() {
 	if err != nil {
 		panic(err)
 	}
+	ps := newPollingService(cl, db)
 
-	newPollingService(cl, db)
-
-	api := newAPIService(cl, db)
+	api := newAPIService(cl, db, ps)
 
 	http.HandleFunc("/api/monitorurl", api.handleMonitorURL)
+	http.HandleFunc("/api/newListings", api.handleNewListings)
 }
