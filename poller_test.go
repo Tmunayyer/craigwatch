@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,13 +15,34 @@ func TestPoll(t *testing.T) {
 	mockCL := mockCraigslistClient{}
 	mockDB := mockDBClient{}
 
-	mockPoller := newPollingService(&mockCL, &mockDB)
+	t.Run("should return listings on first flush call", func(t *testing.T) {
+		mockPoller := newPollingService(&mockCL, &mockDB)
 
-	mockPoller.poll(context.Background(), "www.testing.com")
+		mockPoller.poll(context.Background(), "www.testing.com")
 
-	listings, err := mockPoller.flush()
-	assert.NoError(t, err)
+		listings, err := mockPoller.flush()
+		assert.NoError(t, err)
+		assert.Greater(t, len(listings), 0)
+	})
+}
 
-	fmt.Printf("mockpolling listings: %+v", listings)
+func TestFlush(t *testing.T) {
+	// defined in api_test.go
+	mockCL := mockCraigslistClient{}
+	mockDB := mockDBClient{}
 
+	t.Run("should NOT return listings on subsequent calls", func(t *testing.T) {
+		mockPoller := newPollingService(&mockCL, &mockDB)
+
+		// put something into accumulator
+		mockPoller.poll(context.Background(), "www.testing.com")
+
+		listings, err := mockPoller.flush()
+		assert.NoError(t, err)
+		assert.Greater(t, len(listings), 0)
+
+		listings, err = mockPoller.flush()
+		assert.NoError(t, err)
+		assert.Equal(t, 0, len(listings))
+	})
 }
