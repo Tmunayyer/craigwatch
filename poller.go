@@ -72,7 +72,6 @@ func (pc *pollingClient) flush(ID int) ([]craigslist.Listing, error) {
 }
 
 func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
-
 	record, has := pc.records[search.ID]
 	if !has {
 		// this is a new record, set up accordingly

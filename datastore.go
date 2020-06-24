@@ -105,7 +105,7 @@ func (c *client) applySchema() error {
 
 type clSearch struct {
 	ID        int
-	Email     string
+	Name      string
 	URL       string
 	Confirmed bool
 	Interval  int
@@ -121,11 +121,11 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 
 	rows, err := c.db.Query(`
 		insert into monitor
-			(email, url, confirmed, created_on)
+			(name, url, confirmed, created_on)
 		values
 			($1, $2, $3, Now())
 		returning *
-	`, data.Email, data.URL, false)
+	`, data.Name, data.URL, false)
 	defer rows.Close()
 
 	if err != nil {
@@ -135,7 +135,7 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 	for rows.Next() {
 		err := rows.Scan(
 			&output.ID,
-			&output.Email,
+			&output.Name,
 			&output.URL,
 			&output.Confirmed,
 			&output.Interval,
@@ -160,7 +160,7 @@ func (c *client) getAllSearches() ([]clSearch, error) {
 	rows, err := c.db.Query(`
 		select
 			id,
-			email,
+			name,
 			url,
 			confirmed,
 			interval,
@@ -177,7 +177,7 @@ func (c *client) getAllSearches() ([]clSearch, error) {
 		q := clSearch{}
 		err := rows.Scan(
 			&q.ID,
-			&q.Email,
+			&q.Name,
 			&q.URL,
 			&q.Confirmed,
 			&q.Interval,

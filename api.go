@@ -35,8 +35,8 @@ func apiErrorHandler(w http.ResponseWriter, status int, endpoint string, message
 
 func (s *apiService) handleMonitorURL(w http.ResponseWriter, req *http.Request) {
 	type requestBody struct {
-		Email string
-		URL   string
+		Name string
+		URL  string
 	}
 
 	d := json.NewDecoder(req.Body)
@@ -55,8 +55,8 @@ func (s *apiService) handleMonitorURL(w http.ResponseWriter, req *http.Request) 
 	}
 
 	record, err := s.db.saveSearch(clSearch{
-		Email: body.Email,
-		URL:   body.URL,
+		Name: body.Name,
+		URL:  body.URL,
 	})
 	if err != nil {
 		apiErrorHandler(w, http.StatusInternalServerError, "handleMonitorURL", "could not save the information", err)

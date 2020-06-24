@@ -80,7 +80,7 @@ func (m *mockDBClient) applySchema() error {
 	return nil
 }
 func (m *mockDBClient) saveSearch(data clSearch) (clSearch, error) {
-	return clSearch{ID: 1, Email: data.Email, URL: data.URL, Confirmed: false}, nil
+	return clSearch{ID: 1, Name: data.Name, URL: data.URL, Confirmed: false}, nil
 }
 func (m *mockDBClient) getAllSearches() ([]clSearch, error) {
 	return []clSearch{}, nil
@@ -150,12 +150,12 @@ func TestMonitorURL(t *testing.T) {
 		// make a body
 		type body struct {
 			ID        int
-			Email     string
+			Name      string
 			URL       string
 			Confirmed bool
 		}
 
-		b := body{Email: "testing@gmail.com", URL: "www.anything.com"}
+		b := body{Name: "test monitor 1", URL: "www.anything.com"}
 		data, err := json.Marshal(b)
 		assert.NoError(t, err)
 		reader := bytes.NewReader(data)
@@ -171,7 +171,7 @@ func TestMonitorURL(t *testing.T) {
 		readBodyInto(t, res.Body, &resBody)
 
 		assert.Equal(t, http.StatusOK, res.Code)
-		assert.Equal(t, b.Email, resBody.Email)
+		assert.Equal(t, b.Name, resBody.Name)
 		assert.Equal(t, b.URL, resBody.URL)
 		assert.Equal(t, false, resBody.Confirmed)
 	})

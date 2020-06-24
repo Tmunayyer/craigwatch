@@ -25,14 +25,14 @@ func TestSaveURL(t *testing.T) {
 	defer teardown(t)
 
 	args := clSearch{
-		Email: "TESTING@gmail.com",
-		URL:   "www.TESTING.com",
+		Name: "test search 99",
+		URL:  "www.TESTING.com",
 	}
 
 	record, err := c.saveSearch(args)
 	assert.NoError(t, err)
 
-	assert.Equal(t, args.Email, record.Email)
+	assert.Equal(t, args.Name, record.Name)
 	assert.Equal(t, args.URL, record.URL)
 	assert.False(t, record.Confirmed)
 	assert.Less(t, 0, record.ID)
@@ -48,8 +48,8 @@ func TestGetAllURL(t *testing.T) {
 	defer teardown(t)
 
 	args := clSearch{
-		Email: "TESTING@gmail.com",
-		URL:   "www.TESTING.com",
+		Name: "test search 0100",
+		URL:  "www.TESTING.com",
 	}
 
 	saved, err := c.saveSearch(args)
@@ -70,8 +70,8 @@ func TestDeleteSearch(t *testing.T) {
 	defer teardown(t)
 
 	args := clSearch{
-		Email: "TESTING@gmail.com",
-		URL:   "www.TESTING.com",
+		Name: "testing 123",
+		URL:  "www.TESTING.com",
 	}
 
 	saved, err := c.saveSearch(args)
