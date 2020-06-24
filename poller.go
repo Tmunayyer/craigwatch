@@ -83,6 +83,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	// page, the second time it should be updated
 	currentCutoff := record.polledAsOf
 
+	fmt.Println("polling:", search.URL)
 	newRecords, err := pc.cl.GetNewListings(ctx, search.URL, currentCutoff)
 	if err != nil {
 		fmt.Println("err getting listings from fn poll():", err)
@@ -105,5 +106,5 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	record.polledAsOf = newCutoff
 	record.listings = append(record.listings, newRecords...)
 
-	time.AfterFunc(time.Duration(15*time.Second), func() { pc.poll(ctx, search) })
+	time.AfterFunc(time.Duration(60*time.Second), func() { pc.poll(ctx, search) })
 }
