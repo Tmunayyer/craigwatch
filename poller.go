@@ -79,11 +79,9 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		pc.records[search.ID] = record
 	}
 
-	// current cutoff date
-	currentCutoff := search.CreatedOn
-	if record.polledAsOf.After(currentCutoff) {
-		currentCutoff = record.polledAsOf
-	}
+	// the first time, it should be time.Time nil value giving the entire first
+	// page, the second time it should be updated
+	currentCutoff := record.polledAsOf
 
 	newRecords, err := pc.cl.GetNewListings(ctx, search.URL, currentCutoff)
 	if err != nil {
@@ -95,6 +93,10 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	if len(newRecords) > 0 {
 		layout := "2006-01-02 15:04"
 		newCutoff, err = time.Parse(layout, newRecords[0].Date)
+		// there is a bug from GetNewListings that is returning
+		// a date equal to the currentCutoff, until its fixes, this
+		// should be a decent hack. Issue is opened on github
+		newCutoff = newCutoff.Add(1 * time.Second)
 		if err != nil {
 			fmt.Println("err parsing cutoff time", err)
 		}
