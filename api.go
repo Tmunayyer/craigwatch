@@ -120,3 +120,7 @@ func (s *apiService) handleListing(w http.ResponseWriter, req *http.Request) {
 
 	w.Write(data)
 }
+
+func (s *apiService) handleSearch(w http.ResponseWriter, req *http.Request) {
+
+}
