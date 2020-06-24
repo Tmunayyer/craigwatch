@@ -83,7 +83,10 @@ func (m *mockDBClient) saveSearch(data clSearch) (clSearch, error) {
 	return clSearch{ID: 1, Name: data.Name, URL: data.URL, Confirmed: false}, nil
 }
 func (m *mockDBClient) getAllSearches() ([]clSearch, error) {
-	return []clSearch{}, nil
+	return []clSearch{
+		{ID: 1, Name: "Test seach 1", URL: "www.testing.com", Confirmed: false},
+		{ID: 1, Name: "Test search 2", URL: "www.bigpotatotest.com", Confirmed: false},
+	}, nil
 }
 func (m *mockDBClient) deleteSearch(id int) error {
 	return nil
@@ -120,7 +123,7 @@ func setupTestAPI(t *testing.T) *apiService {
 	return newAPIService(&mockCL, &mockDB, &mockPS)
 }
 
-func TestMonitorURL(t *testing.T) {
+func TestHandleMonitor(t *testing.T) {
 	api := setupTestAPI(t)
 
 	t.Run("post - invalid url", func(t *testing.T) {
@@ -177,7 +180,7 @@ func TestMonitorURL(t *testing.T) {
 	})
 }
 
-func TestHandleNewListings(t *testing.T) {
+func TestHandleListing(t *testing.T) {
 	api := setupTestAPI(t)
 
 	type body struct {
@@ -189,7 +192,7 @@ func TestHandleNewListings(t *testing.T) {
 		// this test case basically rides off the fact that initializing the
 		// mock clients will retrieve no new listings
 
-		req, err := http.NewRequest(http.MethodPost, "/listing?ID=99", nil)
+		req, err := http.NewRequest(http.MethodGet, "/listing?ID=99", nil)
 		assert.NoError(t, err)
 		res := httptest.NewRecorder()
 
@@ -202,7 +205,7 @@ func TestHandleNewListings(t *testing.T) {
 	})
 
 	t.Run("get - should return new listings", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodPost, "/listing?ID=99", nil)
+		req, err := http.NewRequest(http.MethodGet, "/listing?ID=99", nil)
 		assert.NoError(t, err)
 		res := httptest.NewRecorder()
 
@@ -221,6 +224,21 @@ func TestHandleNewListings(t *testing.T) {
 
 		assert.True(t, resBody.HasNewListings)
 	})
+}
+
+func TestHandleSearch(t *testing.T) {
+	api := setupTestAPI(t)
+
+	req, err := http.NewRequest(http.MethodGet, "/listing?ID=99", nil)
+	assert.NoError(t, err)
+	res := httptest.NewRecorder()
+
+	api.handleSearch(res, req)
+
+	resBody := []clSearch{}
+	readBodyInto(t, res.Body, &resBody)
+
+	assert.Equal(t, 2, len(resBody))
 }
 
 // NOTE: before debugging here, make sure destination field are public

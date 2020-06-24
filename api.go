@@ -44,14 +44,14 @@ func (s *apiService) handleMonitor(w http.ResponseWriter, req *http.Request) {
 	body := requestBody{}
 	err := d.Decode(&body)
 	if err != nil {
-		apiErrorHandler(w, http.StatusBadRequest, "handleMonitorURL", "could not decode user payload", err)
+		apiErrorHandler(w, http.StatusBadRequest, "handleMonitor", "could not decode user payload", err)
 		return
 	}
 
 	// validate the url before we put it in the DB
 	_, err = s.cl.GetListings(req.Context(), body.URL)
 	if err != nil {
-		apiErrorHandler(w, http.StatusBadRequest, "handleMonitorURL", "url provided is not a compatible with craigslist", err)
+		apiErrorHandler(w, http.StatusBadRequest, "handleMonitor", "url provided is not a compatible with craigslist", err)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (s *apiService) handleMonitor(w http.ResponseWriter, req *http.Request) {
 		URL:  body.URL,
 	})
 	if err != nil {
-		apiErrorHandler(w, http.StatusInternalServerError, "handleMonitorURL", "could not save the information", err)
+		apiErrorHandler(w, http.StatusInternalServerError, "handleMonitor", "could not save the information", err)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (s *apiService) handleMonitor(w http.ResponseWriter, req *http.Request) {
 
 	data, err := json.Marshal(record)
 	if err != nil {
-		apiErrorHandler(w, http.StatusInternalServerError, "handleMonitorURL", "problems formatting the data", err)
+		apiErrorHandler(w, http.StatusInternalServerError, "handleMonitor", "problems formatting the data", err)
 		return
 	}
 
@@ -85,13 +85,13 @@ func (s *apiService) handleListing(w http.ResponseWriter, req *http.Request) {
 	queryValues := req.URL.Query()
 	ID, err := strconv.Atoi(queryValues["ID"][0])
 	if err != nil {
-		apiErrorHandler(w, http.StatusBadRequest, "handleNewListings", "invalid id provided", err)
+		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid id provided", err)
 		return
 	}
 
 	listings, err := s.ps.flush(ID)
 	if err != nil {
-		apiErrorHandler(w, http.StatusBadRequest, "handleNewListings", "invalid id provided", err)
+		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid id provided", err)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (s *apiService) handleListing(w http.ResponseWriter, req *http.Request) {
 			HasNewListings: false,
 		})
 		if err != nil {
-			apiErrorHandler(w, http.StatusInternalServerError, "handleNewListings", "problems formatting the data", err)
+			apiErrorHandler(w, http.StatusInternalServerError, "handleListing", "problems formatting the data", err)
 			return
 		}
 
@@ -114,7 +114,7 @@ func (s *apiService) handleListing(w http.ResponseWriter, req *http.Request) {
 		Listings:       listings,
 	})
 	if err != nil {
-		apiErrorHandler(w, http.StatusInternalServerError, "handleNewListings", "problems formatting the data", err)
+		apiErrorHandler(w, http.StatusInternalServerError, "handleListing", "problems formatting the data", err)
 		return
 	}
 
@@ -122,5 +122,17 @@ func (s *apiService) handleListing(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *apiService) handleSearch(w http.ResponseWriter, req *http.Request) {
+	searches, err := s.db.getAllSearches()
+	if err != nil {
+		apiErrorHandler(w, http.StatusInternalServerError, "handleSearch", "unable to retrieve data", err)
+		return
+	}
 
+	data, err := json.Marshal(searches)
+	if err != nil {
+		apiErrorHandler(w, http.StatusInternalServerError, "handleSearch", "unable to marshal data", err)
+		return
+	}
+
+	w.Write(data)
 }
