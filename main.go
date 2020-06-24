@@ -30,5 +30,5 @@ func initializeAPI() {
 	api := newAPIService(cl, db, ps)
 
 	http.HandleFunc("/api/monitorurl", api.handleMonitorURL)
-	http.HandleFunc("/api/newListings", api.handleNewListings)
+	http.HandleFunc("/api/listing", api.handleNewListings)
 }

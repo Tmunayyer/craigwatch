@@ -23,7 +23,7 @@ var fakeListings = []craigslist.Listing{
 	{
 		DataPID:      "1",
 		DataRepostOf: "",
-		Date:         "06/19/2020",
+		Date:         "2020-01-02 16:04",
 		Title:        "Bananas, organic, not eaten",
 		Link:         "www.craigslist.com/bananapost",
 		Price:        "$100",
@@ -32,7 +32,7 @@ var fakeListings = []craigslist.Listing{
 	{
 		DataPID:      "2",
 		DataRepostOf: "",
-		Date:         "06/15/2020",
+		Date:         "2020-01-02 13:04",
 		Title:        "The best crackers ever",
 		Link:         "www.craigslist.com/crackers",
 		Price:        "$20",
@@ -99,13 +99,13 @@ func (m *mockPollingService) initiate(context.Context) error {
 func (m *mockPollingService) shutdown() error {
 	return nil
 }
-func (m *mockPollingService) poll(ctx context.Context, url string) {
+func (m *mockPollingService) poll(ctx context.Context, search clSearch) {
 	// note: copy requires destination to have a predefined length
 	listings := make([]craigslist.Listing, len(fakeListings))
 	copy(listings, fakeListings)
 	m.listings = listings
 }
-func (m *mockPollingService) flush() ([]craigslist.Listing, error) {
+func (m *mockPollingService) flush(ID int) ([]craigslist.Listing, error) {
 	return m.listings, nil
 }
 
@@ -189,7 +189,7 @@ func TestHandleNewListings(t *testing.T) {
 		// this test case basically rides off the fact that initializing the
 		// mock clients will retrieve no new listings
 
-		req, err := http.NewRequest(http.MethodPost, "/", nil)
+		req, err := http.NewRequest(http.MethodPost, "/listing?ID=99", nil)
 		assert.NoError(t, err)
 		res := httptest.NewRecorder()
 
@@ -202,12 +202,17 @@ func TestHandleNewListings(t *testing.T) {
 	})
 
 	t.Run("get - should return new listings", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodPost, "/", nil)
+		req, err := http.NewRequest(http.MethodPost, "/listing?ID=99", nil)
 		assert.NoError(t, err)
 		res := httptest.NewRecorder()
 
+		s := clSearch{
+			ID:  99,
+			URL: "www.anything.com",
+		}
+
 		// before making the request, call poll to add some listings
-		api.ps.poll(context.Background(), "anything.com")
+		api.ps.poll(context.Background(), s)
 
 		api.handleNewListings(res, req)
 

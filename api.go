@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	craigslist "github.com/tmunayyer/go-craigslist"
 )
@@ -76,9 +77,17 @@ func (s *apiService) handleNewListings(w http.ResponseWriter, req *http.Request)
 		HasNewListings bool
 		Listings       []craigslist.Listing
 	}
-	listings, err := s.ps.flush()
+
+	queryValues := req.URL.Query()
+	ID, err := strconv.Atoi(queryValues["ID"][0])
 	if err != nil {
-		apiErrorHandler(w, http.StatusInternalServerError, "handleNewListings", "problems retrieving polled data", err)
+		apiErrorHandler(w, http.StatusBadRequest, "handleNewListings", "invalid id provided", err)
+		return
+	}
+
+	listings, err := s.ps.flush(ID)
+	if err != nil {
+		apiErrorHandler(w, http.StatusBadRequest, "handleNewListings", "invalid id provided", err)
 		return
 	}
 
