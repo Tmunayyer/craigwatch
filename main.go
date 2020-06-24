@@ -24,12 +24,11 @@ func main() {
 
 func initializeAPI() {
 	cl := craigslist.NewClient("newyork")
-	db, err := newDBClient()
-	if err != nil {
-		panic(err)
-	}
+	db := newDBClient()
 
-	api := newAPIService(cl, db)
+	ps := newPollingService(cl, db)
+	api := newAPIService(cl, db, ps)
 
-	http.HandleFunc("/api/monitorurl", api.handleMonitorURL)
+	http.HandleFunc("/api/monitor", api.handleMonitor)
+	http.HandleFunc("/api/listing", api.handleListing)
 }

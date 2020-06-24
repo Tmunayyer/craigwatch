@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	craigslist "github.com/tmunayyer/go-craigslist"
@@ -22,7 +23,7 @@ var fakeListings = []craigslist.Listing{
 	{
 		DataPID:      "1",
 		DataRepostOf: "",
-		Date:         "06/19/2020",
+		Date:         "2020-01-02 16:04",
 		Title:        "Bananas, organic, not eaten",
 		Link:         "www.craigslist.com/bananapost",
 		Price:        "$100",
@@ -31,7 +32,7 @@ var fakeListings = []craigslist.Listing{
 	{
 		DataPID:      "2",
 		DataRepostOf: "",
-		Date:         "06/15/2020",
+		Date:         "2020-01-02 13:04",
 		Title:        "The best crackers ever",
 		Link:         "www.craigslist.com/crackers",
 		Price:        "$20",
@@ -55,6 +56,14 @@ func (m *mockCraigslistClient) GetListings(ctx context.Context, url string) ([]c
 	return fakeListings, nil
 }
 
+func (m *mockCraigslistClient) GetNewListings(ctx context.Context, url string, date time.Time) ([]craigslist.Listing, error) {
+	if url == badCraigslistURL {
+		return nil, fmt.Errorf("invalid url: %v", url)
+	}
+
+	return fakeListings, nil
+}
+
 type mockDBClient struct {
 }
 
@@ -70,30 +79,49 @@ func (m *mockDBClient) testConnection() error {
 func (m *mockDBClient) applySchema() error {
 	return nil
 }
-func (m *mockDBClient) saveURL(data craigslistQuery) (craigslistQuery, error) {
-	return craigslistQuery{ID: 1, Email: data.Email, URL: data.URL, Confirmed: false}, nil
+func (m *mockDBClient) saveSearch(data clSearch) (clSearch, error) {
+	return clSearch{ID: 1, Name: data.Name, URL: data.URL, Confirmed: false}, nil
+}
+func (m *mockDBClient) getAllSearches() ([]clSearch, error) {
+	return []clSearch{}, nil
+}
+func (m *mockDBClient) deleteSearch(id int) error {
+	return nil
 }
 
-func TestMonitorURL(t *testing.T) {
+type mockPollingService struct {
+	listings []craigslist.Listing
+}
+
+func (m *mockPollingService) initiate(context.Context) error {
+	return nil
+}
+func (m *mockPollingService) shutdown() error {
+	return nil
+}
+func (m *mockPollingService) poll(ctx context.Context, search clSearch) {
+	// note: copy requires destination to have a predefined length
+	listings := make([]craigslist.Listing, len(fakeListings))
+	copy(listings, fakeListings)
+	m.listings = listings
+}
+func (m *mockPollingService) flush(ID int) ([]craigslist.Listing, error) {
+	return m.listings, nil
+}
+
+func setupTestAPI(t *testing.T) *apiService {
+	t.Helper()
 	mockCL := mockCraigslistClient{
 		location: "newyork",
 	}
 	mockDB := mockDBClient{}
+	mockPS := mockPollingService{}
 
-	api := newAPIService(&mockCL, &mockDB)
+	return newAPIService(&mockCL, &mockDB, &mockPS)
+}
 
-	t.Run("post - no body passed", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodPost, "/", http.NoBody)
-		assert.NoError(t, err)
-		res := httptest.NewRecorder()
-
-		api.handleMonitorURL(res, req)
-
-		message, err := ioutil.ReadAll(res.Body)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-		assert.Equal(t, "could not decode user payload: EOF\n", string(message))
-	})
+func TestMonitorURL(t *testing.T) {
+	api := setupTestAPI(t)
 
 	t.Run("post - invalid url", func(t *testing.T) {
 		// make a body
@@ -110,7 +138,7 @@ func TestMonitorURL(t *testing.T) {
 		assert.NoError(t, err)
 		res := httptest.NewRecorder()
 
-		api.handleMonitorURL(res, req)
+		api.handleMonitor(res, req)
 
 		message, err := ioutil.ReadAll(res.Body)
 
@@ -122,12 +150,12 @@ func TestMonitorURL(t *testing.T) {
 		// make a body
 		type body struct {
 			ID        int
-			Email     string
+			Name      string
 			URL       string
 			Confirmed bool
 		}
 
-		b := body{Email: "testing@gmail.com", URL: "www.anything.com"}
+		b := body{Name: "test monitor 1", URL: "www.anything.com"}
 		data, err := json.Marshal(b)
 		assert.NoError(t, err)
 		reader := bytes.NewReader(data)
@@ -137,15 +165,61 @@ func TestMonitorURL(t *testing.T) {
 		res := httptest.NewRecorder()
 
 		// call handelr
-		api.handleMonitorURL(res, req)
+		api.handleMonitor(res, req)
 
 		resBody := body{}
 		readBodyInto(t, res.Body, &resBody)
 
 		assert.Equal(t, http.StatusOK, res.Code)
-		assert.Equal(t, b.Email, resBody.Email)
+		assert.Equal(t, b.Name, resBody.Name)
 		assert.Equal(t, b.URL, resBody.URL)
 		assert.Equal(t, false, resBody.Confirmed)
+	})
+}
+
+func TestHandleNewListings(t *testing.T) {
+	api := setupTestAPI(t)
+
+	type body struct {
+		HasNewListings bool
+		Listings       []craigslist.Listing
+	}
+
+	t.Run("get - should NOT return new listings", func(t *testing.T) {
+		// this test case basically rides off the fact that initializing the
+		// mock clients will retrieve no new listings
+
+		req, err := http.NewRequest(http.MethodPost, "/listing?ID=99", nil)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
+
+		api.handleListing(res, req)
+
+		resBody := body{}
+		readBodyInto(t, res.Body, &resBody)
+
+		assert.False(t, resBody.HasNewListings)
+	})
+
+	t.Run("get - should return new listings", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, "/listing?ID=99", nil)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
+
+		s := clSearch{
+			ID:  99,
+			URL: "www.anything.com",
+		}
+
+		// before making the request, call poll to add some listings
+		api.ps.poll(context.Background(), s)
+
+		api.handleListing(res, req)
+
+		resBody := body{}
+		readBodyInto(t, res.Body, &resBody)
+
+		assert.True(t, resBody.HasNewListings)
 	})
 }
 

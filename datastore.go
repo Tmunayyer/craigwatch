@@ -11,12 +11,16 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// TODO: Cleanup this interface a bit, start centing things around table
+// TODO: rename montior/URL stuff to search
 type connection interface {
 	connect() error
 	shutdown() error
 	testConnection() error
 	applySchema() error
-	saveURL(craigslistQuery) (craigslistQuery, error)
+	saveSearch(clSearch) (clSearch, error)
+	deleteSearch(id int) error
+	getAllSearches() ([]clSearch, error)
 }
 
 type client struct {
@@ -27,18 +31,18 @@ type client struct {
 // newDBClient will return a connected client with reference to
 // the connection string. The connection string is constructed using
 // environment variables.
-func newDBClient() (connection, error) {
+func newDBClient() connection {
 	c := client{}
 	err := c.connect()
 	if err != nil {
-		return nil, fmt.Errorf("error connecting to pg: %v", err)
+		panic(err)
 	}
 	err = c.applySchema()
 	if err != nil {
-		return nil, fmt.Errorf("error applying schema: %v", err)
+		panic(err)
 	}
 
-	return &c, nil
+	return &c
 }
 
 // Connect to the database
@@ -99,9 +103,9 @@ func (c *client) applySchema() error {
 // ===== Models
 // =======================
 
-type craigslistQuery struct {
+type clSearch struct {
 	ID        int
-	Email     string
+	Name      string
 	URL       string
 	Confirmed bool
 	Interval  int
@@ -112,16 +116,16 @@ type craigslistQuery struct {
 // ===== Queries
 // =======================
 
-func (c *client) saveURL(data craigslistQuery) (craigslistQuery, error) {
-	output := craigslistQuery{}
+func (c *client) saveSearch(data clSearch) (clSearch, error) {
+	output := clSearch{}
 
 	rows, err := c.db.Query(`
 		insert into monitor
-			(email, url, confirmed, created_on)
+			(name, url, confirmed, created_on)
 		values
 			($1, $2, $3, Now())
 		returning *
-	`, data.Email, data.URL, false)
+	`, data.Name, data.URL, false)
 	defer rows.Close()
 
 	if err != nil {
@@ -131,7 +135,7 @@ func (c *client) saveURL(data craigslistQuery) (craigslistQuery, error) {
 	for rows.Next() {
 		err := rows.Scan(
 			&output.ID,
-			&output.Email,
+			&output.Name,
 			&output.URL,
 			&output.Confirmed,
 			&output.Interval,
@@ -148,4 +152,63 @@ func (c *client) saveURL(data craigslistQuery) (craigslistQuery, error) {
 	}
 
 	return output, nil
+}
+
+func (c *client) getAllSearches() ([]clSearch, error) {
+	output := []clSearch{}
+
+	rows, err := c.db.Query(`
+		select
+			id,
+			name,
+			url,
+			confirmed,
+			interval,
+			created_on
+		from 
+			monitor
+	`)
+
+	if err != nil {
+		return output, err
+	}
+
+	for rows.Next() {
+		q := clSearch{}
+		err := rows.Scan(
+			&q.ID,
+			&q.Name,
+			&q.URL,
+			&q.Confirmed,
+			&q.Interval,
+			&q.CreatedOn,
+		)
+		if err != nil {
+			return output, err
+		}
+
+		output = append(output, q)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
+}
+
+func (c *client) deleteSearch(id int) error {
+	_, err := c.db.Query(`
+		delete from 
+			monitor
+		where
+			id = $1
+	`, id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
