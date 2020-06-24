@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -33,7 +34,7 @@ func apiErrorHandler(w http.ResponseWriter, status int, endpoint string, message
 	http.Error(w, message, http.StatusBadRequest)
 }
 
-func (s *apiService) handleMonitorURL(w http.ResponseWriter, req *http.Request) {
+func (s *apiService) handleMonitor(w http.ResponseWriter, req *http.Request) {
 	type requestBody struct {
 		Name string
 		URL  string
@@ -63,6 +64,9 @@ func (s *apiService) handleMonitorURL(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	// spin up the process to monitor the record
+	go s.ps.poll(context.TODO(), record)
+
 	data, err := json.Marshal(record)
 	if err != nil {
 		apiErrorHandler(w, http.StatusInternalServerError, "handleMonitorURL", "problems formatting the data", err)
@@ -72,7 +76,7 @@ func (s *apiService) handleMonitorURL(w http.ResponseWriter, req *http.Request) 
 	w.Write(data)
 }
 
-func (s *apiService) handleNewListings(w http.ResponseWriter, req *http.Request) {
+func (s *apiService) handleListing(w http.ResponseWriter, req *http.Request) {
 	type resObject struct {
 		HasNewListings bool
 		Listings       []craigslist.Listing

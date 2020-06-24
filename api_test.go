@@ -138,7 +138,7 @@ func TestMonitorURL(t *testing.T) {
 		assert.NoError(t, err)
 		res := httptest.NewRecorder()
 
-		api.handleMonitorURL(res, req)
+		api.handleMonitor(res, req)
 
 		message, err := ioutil.ReadAll(res.Body)
 
@@ -165,7 +165,7 @@ func TestMonitorURL(t *testing.T) {
 		res := httptest.NewRecorder()
 
 		// call handelr
-		api.handleMonitorURL(res, req)
+		api.handleMonitor(res, req)
 
 		resBody := body{}
 		readBodyInto(t, res.Body, &resBody)
@@ -193,7 +193,7 @@ func TestHandleNewListings(t *testing.T) {
 		assert.NoError(t, err)
 		res := httptest.NewRecorder()
 
-		api.handleNewListings(res, req)
+		api.handleListing(res, req)
 
 		resBody := body{}
 		readBodyInto(t, res.Body, &resBody)
@@ -214,7 +214,7 @@ func TestHandleNewListings(t *testing.T) {
 		// before making the request, call poll to add some listings
 		api.ps.poll(context.Background(), s)
 
-		api.handleNewListings(res, req)
+		api.handleListing(res, req)
 
 		resBody := body{}
 		readBodyInto(t, res.Body, &resBody)
