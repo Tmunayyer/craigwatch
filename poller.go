@@ -21,16 +21,16 @@ type pollingRecord struct {
 }
 
 type pollingClient struct {
-	cl       craigslist.API
-	db       connection
-	listings map[int]*pollingRecord
+	cl      craigslist.API
+	db      connection
+	records map[int]*pollingRecord
 }
 
 func newPollingService(cl craigslist.API, db connection) pollingService {
 	pc := pollingClient{
-		cl:       cl,
-		db:       db,
-		listings: make(map[int]*pollingRecord),
+		cl:      cl,
+		db:      db,
+		records: make(map[int]*pollingRecord),
 	}
 
 	err := pc.initiate(context.TODO())
@@ -60,7 +60,7 @@ func (pc *pollingClient) shutdown() error {
 }
 
 func (pc *pollingClient) flush(ID int) ([]craigslist.Listing, error) {
-	record, has := pc.listings[ID]
+	record, has := pc.records[ID]
 	if !has {
 		return []craigslist.Listing{}, fmt.Errorf("invalid ID provided")
 	}
@@ -73,11 +73,11 @@ func (pc *pollingClient) flush(ID int) ([]craigslist.Listing, error) {
 
 func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 
-	record, has := pc.listings[search.ID]
+	record, has := pc.records[search.ID]
 	if !has {
 		// this is a new record, set up accordingly
 		record = &pollingRecord{}
-		pc.listings[search.ID] = record
+		pc.records[search.ID] = record
 	}
 
 	// current cutoff date
