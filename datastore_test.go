@@ -2,7 +2,6 @@ package main
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -142,14 +141,4 @@ func TestSaveListing(t *testing.T) {
 	assert.NoError(t, err)
 	err = c.deleteListings(search.ID)
 	assert.NoError(t, err)
-}
-
-func newDate(date string) time.Time {
-	layout := "2006-01-02 15:04"
-	formattedDate, err := time.Parse(layout, date)
-	if err != nil {
-		panic(err)
-	}
-
-	return formattedDate
 }

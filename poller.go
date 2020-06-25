@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"sync"
 	"time"
 
 	craigslist "github.com/tmunayyer/go-craigslist"
@@ -23,6 +25,7 @@ type pollingRecord struct {
 type pollingClient struct {
 	cl      craigslist.API
 	db      connection
+	mu      sync.Mutex // guard records
 	records map[int]*pollingRecord
 }
 
@@ -72,6 +75,7 @@ func (pc *pollingClient) flush(ID int) ([]craigslist.Listing, error) {
 }
 
 func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
+	pc.mu.Lock()
 	record, has := pc.records[search.ID]
 	if !has {
 		// this is a new record, set up accordingly
@@ -92,6 +96,24 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	// new cutoff date
 	newCutoff := record.polledAsOf
 	if len(newRecords) > 0 {
+		listingsToSave := []clListing{}
+		for _, l := range newRecords {
+			p, err := strconv.Atoi(l.Price[1:])
+			if err != nil {
+				fmt.Println("err converting from fn poll():", err)
+			}
+			listingsToSave = append(listingsToSave, clListing{
+				DataPID:      l.DataPID,
+				DataRepostOf: l.DataRepostOf,
+				Date:         newDate(l.Date),
+				Title:        l.Title,
+				Link:         l.Link,
+				Price:        p,
+				Hood:         l.Hood,
+			})
+		}
+		pc.db.saveListings(search.ID, listingsToSave)
+
 		layout := "2006-01-02 15:04"
 		newCutoff, err = time.Parse(layout, newRecords[0].Date)
 		// there is a bug from GetNewListings that is returning
@@ -106,5 +128,6 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	record.polledAsOf = newCutoff
 	record.listings = append(record.listings, newRecords...)
 
+	pc.mu.Unlock()
 	time.AfterFunc(time.Duration(60*time.Second), func() { pc.poll(ctx, search) })
 }

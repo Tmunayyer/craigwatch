@@ -125,7 +125,7 @@ type clListing struct {
 	Date         time.Time
 	Title        string
 	Link         string
-	Price        int32
+	Price        int
 	Hood         string
 }
 
