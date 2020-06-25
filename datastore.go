@@ -10,7 +10,6 @@ import (
 
 	// postgres driver
 	"github.com/lib/pq"
-	_ "github.com/lib/pq"
 )
 
 // TODO: Cleanup this interface a bit, start centing things around table

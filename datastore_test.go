@@ -83,7 +83,14 @@ func TestGetAllURL(t *testing.T) {
 
 	records, err := c.getAllSearches()
 	assert.NoError(t, err)
-	assert.Equal(t, args.URL, records[0].URL)
+	doesExist := false
+	for _, r := range records {
+		if r.URL == args.URL {
+			doesExist = true
+			break
+		}
+	}
+	assert.True(t, doesExist)
 
 	// delete the saved records
 	err = c.deleteSearch(saved.ID)
