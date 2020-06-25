@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"time"
 
 	// postgres driver
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 // TODO: Cleanup this interface a bit, start centing things around table
@@ -21,6 +22,9 @@ type connection interface {
 	saveSearch(clSearch) (clSearch, error)
 	deleteSearch(id int) error
 	getAllSearches() ([]clSearch, error)
+	saveListings(monitorID int, listings []clListing) error
+	deleteListings(monitorID int) error
+	getListings(id int) ([]clListing, error)
 }
 
 type client struct {
@@ -110,6 +114,18 @@ type clSearch struct {
 	Confirmed bool
 	Interval  int
 	CreatedOn time.Time
+}
+
+type clListing struct {
+	ID           int
+	MonitorID    int
+	DataPID      string
+	DataRepostOf string
+	Date         time.Time
+	Title        string
+	Link         string
+	Price        int
+	Hood         string
 }
 
 // =======================
@@ -211,4 +227,104 @@ func (c *client) deleteSearch(id int) error {
 	}
 
 	return nil
+}
+
+func (c *client) saveListings(monitorID int, listings []clListing) error {
+	txn, err := c.db.Begin()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	stmt, err := txn.Prepare(pq.CopyIn("listing", "monitor_id", "data_pid", "data_repost_of", "date", "title", "link", "price", "hood"))
+	if err != nil {
+		fmt.Println("from the formatting")
+		return err
+	}
+
+	for _, l := range listings {
+		_, err = stmt.Exec(monitorID, l.DataPID, l.DataRepostOf, l.Date, l.Title, l.Link, l.Price, l.Hood)
+
+		if err != nil {
+			fmt.Println("from the executing")
+			return err
+		}
+	}
+
+	_, err = stmt.Exec()
+	if err != nil {
+		return err
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		return err
+	}
+
+	err = txn.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *client) deleteListings(monitorID int) error {
+	_, err := c.db.Query(`
+		delete from 
+			listing
+		where
+			monitor_id = $1
+	`, monitorID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *client) getListings(monitorID int) ([]clListing, error) {
+	output := []clListing{}
+
+	rows, err := c.db.Query(`
+		select
+			*
+		from 
+			listing
+		where
+			monitor_id = $1
+		order by
+			date desc;
+	`, monitorID)
+
+	if err != nil {
+		return output, err
+	}
+
+	for rows.Next() {
+		q := clListing{}
+		err := rows.Scan(
+			&q.ID,
+			&q.MonitorID,
+			&q.DataPID,
+			&q.DataRepostOf,
+			&q.Date,
+			&q.Title,
+			&q.Link,
+			&q.Price,
+			&q.Hood,
+		)
+		if err != nil {
+			return output, err
+		}
+
+		output = append(output, q)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
 }

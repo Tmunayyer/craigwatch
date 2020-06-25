@@ -92,6 +92,16 @@ func (m *mockDBClient) deleteSearch(id int) error {
 	return nil
 }
 
+func (m *mockDBClient) saveListings(monitorID int, listings []clListing) error {
+	return nil
+}
+func (m *mockDBClient) deleteListings(monitorID int) error {
+	return nil
+}
+func (m *mockDBClient) getListings(id int) ([]clListing, error) {
+	return []clListing{}, nil
+}
+
 type mockPollingService struct {
 	listings []craigslist.Listing
 }
