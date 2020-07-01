@@ -88,16 +88,16 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	currentCutoff := record.polledAsOf
 
 	fmt.Println("polling:", search.URL)
-	newRecords, err := pc.cl.GetNewListings(ctx, search.URL, currentCutoff)
+	result, err := pc.cl.GetNewListings(ctx, search.URL, currentCutoff)
 	if err != nil {
 		fmt.Println("err getting listings from fn poll():", err)
 	}
 
 	// new cutoff date
 	newCutoff := record.polledAsOf
-	if len(newRecords) > 0 {
+	if len(result.Listings) > 0 {
 		listingsToSave := []clListing{}
-		for _, l := range newRecords {
+		for _, l := range result.Listings {
 			p, err := strconv.Atoi(l.Price[1:])
 			if err != nil {
 				fmt.Println("err converting from fn poll():", err)
@@ -115,7 +115,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		pc.db.saveListings(search.ID, listingsToSave)
 
 		layout := "2006-01-02 15:04"
-		newCutoff, err = time.Parse(layout, newRecords[0].Date)
+		newCutoff, err = time.Parse(layout, result.Listings[0].Date)
 		// there is a bug from GetNewListings that is returning
 		// a date equal to the currentCutoff, until its fixes, this
 		// should be a decent hack. Issue is opened on github
@@ -126,7 +126,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	}
 
 	record.polledAsOf = newCutoff
-	record.listings = append(record.listings, newRecords...)
+	record.listings = append(record.listings, result.Listings...)
 
 	pc.mu.Unlock()
 	time.AfterFunc(time.Duration(60*time.Second), func() { pc.poll(ctx, search) })

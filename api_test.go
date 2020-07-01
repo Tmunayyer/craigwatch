@@ -48,20 +48,28 @@ func (m *mockCraigslistClient) FormatURL(term string, o craigslist.Options) stri
 	return ""
 }
 
-func (m *mockCraigslistClient) GetListings(ctx context.Context, url string) ([]craigslist.Listing, error) {
+func (m *mockCraigslistClient) GetListings(ctx context.Context, url string) (*craigslist.Result, error) {
 	if url == badCraigslistURL {
-		return nil, fmt.Errorf("invalid url: %v", url)
+		return &craigslist.Result{}, fmt.Errorf("invalid url: %v", url)
 	}
 
-	return fakeListings, nil
+	fakeResult := craigslist.Result{
+		Listings: fakeListings,
+	}
+
+	return &fakeResult, nil
 }
 
-func (m *mockCraigslistClient) GetNewListings(ctx context.Context, url string, date time.Time) ([]craigslist.Listing, error) {
+func (m *mockCraigslistClient) GetNewListings(ctx context.Context, url string, date time.Time) (*craigslist.Result, error) {
 	if url == badCraigslistURL {
-		return nil, fmt.Errorf("invalid url: %v", url)
+		return &craigslist.Result{}, fmt.Errorf("invalid url: %v", url)
 	}
 
-	return fakeListings, nil
+	fakeResult := craigslist.Result{
+		Listings: fakeListings,
+	}
+
+	return &fakeResult, nil
 }
 
 type mockDBClient struct {
