@@ -16,7 +16,6 @@ var testListings = []clListing{
 	{
 		DataPID:      "123456",
 		DataRepostOf: "",
-		Date:         newDate("2020-06-01 12:00"),
 		UnixDate:     newUnixDate("2020-06-01 12:00"),
 		Title:        "testListingNumeroUno",
 		Link:         "www.testing.com",
@@ -26,7 +25,6 @@ var testListings = []clListing{
 	{
 		DataPID:      "654321",
 		DataRepostOf: "",
-		Date:         newDate("2020-05-01 12:00"),
 		UnixDate:     newUnixDate("2020-05-01 12:00"),
 		Title:        "testListingNumeroDOS",
 		Link:         "www.testing.com",

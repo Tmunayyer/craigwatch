@@ -122,7 +122,6 @@ type clListing struct {
 	MonitorID    int
 	DataPID      string
 	DataRepostOf string
-	Date         time.Time
 	UnixDate     int64
 	Title        string
 	Link         string
