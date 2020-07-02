@@ -109,6 +109,9 @@ func (m *mockDBClient) deleteListings(monitorID int) error {
 func (m *mockDBClient) getListings(id int) ([]clListing, error) {
 	return []clListing{}, nil
 }
+func (m *mockDBClient) getListingsAfter(id int, date time.Time) ([]clListing, error) {
+	return []clListing{}, nil
+}
 
 type mockPollingService struct {
 	listings []craigslist.Listing

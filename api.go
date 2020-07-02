@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	craigslist "github.com/tmunayyer/go-craigslist"
 )
@@ -79,21 +80,39 @@ func (s *apiService) handleMonitor(w http.ResponseWriter, req *http.Request) {
 func (s *apiService) handleListing(w http.ResponseWriter, req *http.Request) {
 	type resObject struct {
 		HasNewListings bool
-		Listings       []craigslist.Listing
+		Listings       []clListing
 	}
 
 	queryValues := req.URL.Query()
 	ID, err := strconv.Atoi(queryValues["ID"][0])
+	unixTimestamp, err := strconv.Atoi(queryValues["Datetime"][0])
 	if err != nil {
 		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid id provided", err)
 		return
 	}
 
-	listings, err := s.ps.flush(ID)
+	fmt.Println("the unixtimestamp:", unixTimestamp)
+	thecutoff := time.Unix(int64(unixTimestamp), 0).UTC()
+	layout := "2006-01-02 15:04"
+	stringyCutoff := thecutoff.Format(layout)
+	parsedTime, err := time.Parse(layout, stringyCutoff)
+	fmt.Println("the parsedTime:", parsedTime)
 	if err != nil {
-		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid id provided", err)
+		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid date provided", err)
 		return
 	}
+
+	listings, err := s.db.getListingsAfter(ID, parsedTime)
+	if err != nil {
+		apiErrorHandler(w, http.StatusInternalServerError, "handleListing", "err retrieving listings from db", err)
+		return
+	}
+
+	// listings, err := s.ps.flush(ID)
+	// if err != nil {
+	// 	apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid id provided", err)
+	// 	return
+	// }
 
 	// no new listings yet
 	if len(listings) < 1 {

@@ -333,6 +333,8 @@ func (c *client) getListings(monitorID int) ([]clListing, error) {
 func (c *client) getListingsAfter(monitorID int, date time.Time) ([]clListing, error) {
 	output := []clListing{}
 
+	fmt.Println("the date:", date)
+
 	rows, err := c.db.Query(`
 		select
 			*
@@ -341,7 +343,7 @@ func (c *client) getListingsAfter(monitorID int, date time.Time) ([]clListing, e
 		where
 			monitor_id = $1
 		and
-			date > $2
+			date > date($2)
 		order by
 			date desc;
 	`, monitorID, date)
