@@ -12,7 +12,7 @@ create table if not exists listing (
     monitor_id INTEGER REFERENCES monitor(id),
 	data_pid text UNIQUE NOT NULL,
     data_repost_of text,
-    "date" timestamptz,
+    unix_date bigint,
     title text,
     link text,
     price text,
