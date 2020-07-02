@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	craigslist "github.com/tmunayyer/go-craigslist"
 )
@@ -78,41 +77,46 @@ func (s *apiService) handleMonitor(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *apiService) handleListing(w http.ResponseWriter, req *http.Request) {
+	if req.Method != "GET" {
+		apiErrorHandler(w, http.StatusNotImplemented, "handleListing", "method not supported: "+req.Method, nil)
+		return
+	}
+
 	type resObject struct {
 		HasNewListings bool
 		Listings       []clListing
 	}
 
 	queryValues := req.URL.Query()
-	ID, err := strconv.Atoi(queryValues["ID"][0])
-	unixTimestamp, err := strconv.Atoi(queryValues["Datetime"][0])
+	qValID, has := queryValues["ID"]
+	if !has {
+		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "missing query value: ID", nil)
+		return
+	}
+
+	ID, err := strconv.Atoi(qValID[0])
 	if err != nil {
 		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid id provided", err)
 		return
 	}
 
-	fmt.Println("the unixtimestamp:", unixTimestamp)
-	thecutoff := time.Unix(int64(unixTimestamp), 0).UTC()
-	layout := "2006-01-02 15:04"
-	stringyCutoff := thecutoff.Format(layout)
-	parsedTime, err := time.Parse(layout, stringyCutoff)
-	fmt.Println("the parsedTime:", parsedTime)
-	if err != nil {
-		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid date provided", err)
+	qValDatetime, has := queryValues["Datetime"]
+	if !has {
+		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "missing query value: Datetime", nil)
 		return
 	}
 
-	listings, err := s.db.getListingsAfter(ID, parsedTime)
+	unixTimestamp, err := strconv.Atoi(qValDatetime[0])
+	if err != nil {
+		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid Datetime provided", err)
+		return
+	}
+
+	listings, err := s.db.getListingsAfter(ID, int64(unixTimestamp))
 	if err != nil {
 		apiErrorHandler(w, http.StatusInternalServerError, "handleListing", "err retrieving listings from db", err)
 		return
 	}
-
-	// listings, err := s.ps.flush(ID)
-	// if err != nil {
-	// 	apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid id provided", err)
-	// 	return
-	// }
 
 	// no new listings yet
 	if len(listings) < 1 {

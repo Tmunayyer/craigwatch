@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -38,6 +39,15 @@ var fakeListings = []craigslist.Listing{
 		Price:        "$20",
 		Hood:         "newyork",
 	},
+}
+
+var fakeSearch = clSearch{
+	ID:        99,
+	Name:      "bladerunner",
+	URL:       "www.bladerunner.com",
+	Confirmed: false,
+	Interval:  0,
+	CreatedOn: time.Time{},
 }
 
 type mockCraigslistClient struct {
@@ -109,8 +119,28 @@ func (m *mockDBClient) deleteListings(monitorID int) error {
 func (m *mockDBClient) getListings(id int) ([]clListing, error) {
 	return []clListing{}, nil
 }
-func (m *mockDBClient) getListingsAfter(id int, date time.Time) ([]clListing, error) {
-	return []clListing{}, nil
+func (m *mockDBClient) getListingsAfter(id int, date int64) ([]clListing, error) {
+	output := []clListing{}
+	for _, l := range fakeListings {
+		p, err := strconv.Atoi(l.Price[1:])
+		if err != nil {
+			fmt.Println("err converting from fn poll():", err)
+		}
+		listing := clListing{
+			ID:           123456,
+			MonitorID:    fakeSearch.ID,
+			DataPID:      l.DataPID,
+			DataRepostOf: l.DataRepostOf,
+			UnixDate:     newUnixDate(l.Date),
+			Title:        l.Title,
+			Link:         l.Link,
+			Price:        p,
+			Hood:         l.Hood,
+		}
+
+		output = append(output, listing)
+	}
+	return output, nil
 }
 
 type mockPollingService struct {
@@ -206,37 +236,16 @@ func TestHandleListing(t *testing.T) {
 
 	type body struct {
 		HasNewListings bool
-		Listings       []craigslist.Listing
+		Listings       []clListing
 	}
 
-	t.Run("get - should NOT return new listings", func(t *testing.T) {
+	t.Run("get - should return ALL new listings", func(t *testing.T) {
 		// this test case basically rides off the fact that initializing the
 		// mock clients will retrieve no new listings
 
-		req, err := http.NewRequest(http.MethodGet, "/listing?ID=99", nil)
+		req, err := http.NewRequest(http.MethodGet, "/listing?ID=99&Datetime=0", nil)
 		assert.NoError(t, err)
 		res := httptest.NewRecorder()
-
-		api.handleListing(res, req)
-
-		resBody := body{}
-		readBodyInto(t, res.Body, &resBody)
-
-		assert.False(t, resBody.HasNewListings)
-	})
-
-	t.Run("get - should return new listings", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, "/listing?ID=99", nil)
-		assert.NoError(t, err)
-		res := httptest.NewRecorder()
-
-		s := clSearch{
-			ID:  99,
-			URL: "www.anything.com",
-		}
-
-		// before making the request, call poll to add some listings
-		api.ps.poll(context.Background(), s)
 
 		api.handleListing(res, req)
 
@@ -244,6 +253,7 @@ func TestHandleListing(t *testing.T) {
 		readBodyInto(t, res.Body, &resBody)
 
 		assert.True(t, resBody.HasNewListings)
+		assert.Len(t, resBody.Listings, 2)
 	})
 }
 
