@@ -105,7 +105,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 			listingsToSave = append(listingsToSave, clListing{
 				DataPID:      l.DataPID,
 				DataRepostOf: l.DataRepostOf,
-				Date:         newDate(l.Date),
+				UnixDate:     newUnixDate(l.Date),
 				Title:        l.Title,
 				Link:         l.Link,
 				Price:        p,
