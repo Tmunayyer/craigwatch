@@ -10,7 +10,7 @@ create table if not exists monitor (
 create table if not exists listing (
     id serial primary key,
     monitor_id INTEGER REFERENCES monitor(id),
-	data_pid text,
+	data_pid text UNIQUE NOT NULL,
     data_repost_of text,
     "date" timestamptz,
     title text,
