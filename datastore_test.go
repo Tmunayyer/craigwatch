@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,7 @@ var testListings = []clListing{
 		DataPID:      "123456",
 		DataRepostOf: "",
 		Date:         newDate("2020-06-01 12:00"),
+		UnixDate:     newUnixDate("2020-06-01 12:00"),
 		Title:        "testListingNumeroUno",
 		Link:         "www.testing.com",
 		Price:        106,
@@ -25,6 +27,7 @@ var testListings = []clListing{
 		DataPID:      "654321",
 		DataRepostOf: "",
 		Date:         newDate("2020-05-01 12:00"),
+		UnixDate:     newUnixDate("2020-05-01 12:00"),
 		Title:        "testListingNumeroDOS",
 		Link:         "www.testing.com",
 		Price:        999,
@@ -184,7 +187,10 @@ func TestGetListing(t *testing.T) {
 		err = c.saveListings(search.ID, testListings)
 		assert.NoError(t, err)
 
-		savedListings, err := c.getListingsAfter(search.ID, newDate("2020-05-01 12:00"))
+		unixTime := newUnixDate("2020-05-01 12:00")
+		fmt.Println("the test unix", unixTime)
+
+		savedListings, err := c.getListingsAfter(search.ID, unixTime)
 		assert.NoError(t, err)
 
 		// tests
