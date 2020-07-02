@@ -149,3 +149,53 @@ func TestSaveListing(t *testing.T) {
 	err = c.deleteListings(search.ID)
 	assert.NoError(t, err)
 }
+
+func TestGetListing(t *testing.T) {
+	c, teardown, err := setupDBTestCase(t)
+	assert.NoError(t, err)
+	defer teardown(t)
+
+	t.Run("get all listings", func(t *testing.T) {
+		search, err := c.saveSearch(testSearch)
+		assert.NoError(t, err)
+
+		err = c.saveListings(search.ID, testListings)
+		assert.NoError(t, err)
+
+		savedListings, err := c.getListings(search.ID)
+		assert.NoError(t, err)
+
+		// tests
+		assert.Len(t, savedListings, 2)
+		// should be ordered by date
+		assert.Equal(t, savedListings[0].DataPID, testListings[0].DataPID)
+		assert.Equal(t, savedListings[1].DataPID, testListings[1].DataPID)
+
+		err = c.deleteListings(search.ID)
+		assert.NoError(t, err)
+		err = c.deleteListings(search.ID)
+		assert.NoError(t, err)
+	})
+
+	t.Run("get all listings after specfic datetime", func(t *testing.T) {
+		search, err := c.saveSearch(testSearch)
+		assert.NoError(t, err)
+
+		err = c.saveListings(search.ID, testListings)
+		assert.NoError(t, err)
+
+		savedListings, err := c.getListingsAfter(search.ID, newDate("2020-05-01 12:00"))
+		assert.NoError(t, err)
+
+		// tests
+		assert.Len(t, savedListings, 1)
+		// should be ordered by date
+		assert.Equal(t, savedListings[0].DataPID, testListings[0].DataPID)
+
+		err = c.deleteListings(search.ID)
+		assert.NoError(t, err)
+		err = c.deleteListings(search.ID)
+		assert.NoError(t, err)
+	})
+
+}

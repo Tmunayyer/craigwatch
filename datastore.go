@@ -25,6 +25,7 @@ type connection interface {
 	saveListings(monitorID int, listings []clListing) error
 	deleteListings(monitorID int) error
 	getListings(id int) ([]clListing, error)
+	getListingsAfter(id int, date time.Time) ([]clListing, error)
 }
 
 type client struct {
@@ -296,6 +297,54 @@ func (c *client) getListings(monitorID int) ([]clListing, error) {
 		order by
 			date desc;
 	`, monitorID)
+
+	if err != nil {
+		return output, err
+	}
+
+	for rows.Next() {
+		q := clListing{}
+		err := rows.Scan(
+			&q.ID,
+			&q.MonitorID,
+			&q.DataPID,
+			&q.DataRepostOf,
+			&q.Date,
+			&q.Title,
+			&q.Link,
+			&q.Price,
+			&q.Hood,
+		)
+		if err != nil {
+			return output, err
+		}
+
+		output = append(output, q)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
+}
+
+func (c *client) getListingsAfter(monitorID int, date time.Time) ([]clListing, error) {
+	output := []clListing{}
+
+	rows, err := c.db.Query(`
+		select
+			*
+		from 
+			listing
+		where
+			monitor_id = $1
+		and
+			date > $2
+		order by
+			date desc;
+	`, monitorID, date)
 
 	if err != nil {
 		return output, err
