@@ -178,10 +178,10 @@ func (c *client) getAllSearches() ([]clSearch, error) {
 	rows, err := c.db.Query(`
 		select
 			m.*,
-			l.unix_cutoff_date
+			coalesce(l.unix_cutoff_date, '0')
 		from
 			monitor m
-		join
+		left join
 			(
 				select
 					monitor_id,

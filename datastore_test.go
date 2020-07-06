@@ -69,7 +69,7 @@ func TestSaveURL(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestGetAllURL(t *testing.T) {
+func TestGetAllSearch(t *testing.T) {
 	c, teardown, err := setupDBTestCase(t)
 	assert.NoError(t, err)
 	defer teardown(t)
@@ -84,6 +84,7 @@ func TestGetAllURL(t *testing.T) {
 
 	records, err := c.getAllSearches()
 	assert.NoError(t, err)
+
 	doesExist := false
 	for _, r := range records {
 		if r.URL == args.URL {
