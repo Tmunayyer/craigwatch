@@ -69,7 +69,7 @@ func TestSaveSearch(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestGetAllSearch(t *testing.T) {
+func TestGetSearchMulti(t *testing.T) {
 	c, teardown, err := setupDBTestCase(t)
 	assert.NoError(t, err)
 	defer teardown(t)
@@ -126,7 +126,7 @@ func TestDeleteSearch(t *testing.T) {
 	}
 }
 
-func TestSaveListing(t *testing.T) {
+func TestSaveListingMulti(t *testing.T) {
 	c, teardown, err := setupDBTestCase(t)
 	assert.NoError(t, err)
 	defer teardown(t)
@@ -152,7 +152,7 @@ func TestSaveListing(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestGetListing(t *testing.T) {
+func TestGetListingMulti(t *testing.T) {
 	c, teardown, err := setupDBTestCase(t)
 	assert.NoError(t, err)
 	defer teardown(t)
