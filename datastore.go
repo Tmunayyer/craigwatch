@@ -12,20 +12,22 @@ import (
 	"github.com/lib/pq"
 )
 
-// TODO: Cleanup this interface a bit, start centing things around table
-// TODO: rename montior/URL stuff to search
+// TODO: rename monitor table to search
+// TODO: more expressive function names
 type connection interface {
 	connect() error
 	shutdown() error
 	testConnection() error
 	applySchema() error
+
 	saveSearch(clSearch) (clSearch, error)
 	deleteSearch(id int) error
-	getAllSearches() ([]clSearch, error)
-	saveListings(monitorID int, listings []clListing) error
-	deleteListings(monitorID int) error
-	getListings(id int) ([]clListing, error)
-	getListingsAfter(id int, unixDate int64) ([]clListing, error)
+	getSearchMulti() ([]clSearch, error)
+
+	saveListingMulti(monitorID int, listings []clListing) error
+	deleteListingMulti(monitorID int) error
+	getListingMulti(id int) ([]clListing, error)
+	getListingMultiAfter(id int, unixDate int64) ([]clListing, error)
 }
 
 type client struct {
@@ -172,7 +174,7 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 	return output, nil
 }
 
-func (c *client) getAllSearches() ([]clSearch, error) {
+func (c *client) getSearchMulti() ([]clSearch, error) {
 	output := []clSearch{}
 
 	rows, err := c.db.Query(`
@@ -237,7 +239,7 @@ func (c *client) deleteSearch(id int) error {
 	return nil
 }
 
-func (c *client) saveListings(monitorID int, listings []clListing) error {
+func (c *client) saveListingMulti(monitorID int, listings []clListing) error {
 	txn, err := c.db.Begin()
 	if err != nil {
 		log.Fatal(err)
@@ -276,7 +278,7 @@ func (c *client) saveListings(monitorID int, listings []clListing) error {
 	return nil
 }
 
-func (c *client) deleteListings(monitorID int) error {
+func (c *client) deleteListingMulti(monitorID int) error {
 	_, err := c.db.Query(`
 		delete from 
 			listing
@@ -291,7 +293,7 @@ func (c *client) deleteListings(monitorID int) error {
 	return nil
 }
 
-func (c *client) getListings(monitorID int) ([]clListing, error) {
+func (c *client) getListingMulti(monitorID int) ([]clListing, error) {
 	output := []clListing{}
 
 	rows, err := c.db.Query(`
@@ -337,7 +339,7 @@ func (c *client) getListings(monitorID int) ([]clListing, error) {
 	return output, nil
 }
 
-func (c *client) getListingsAfter(monitorID int, unixDate int64) ([]clListing, error) {
+func (c *client) getListingMultiAfter(monitorID int, unixDate int64) ([]clListing, error) {
 	output := []clListing{}
 
 	rows, err := c.db.Query(`

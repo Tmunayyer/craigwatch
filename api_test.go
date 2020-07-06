@@ -102,7 +102,7 @@ func (m *mockDBClient) applySchema() error {
 func (m *mockDBClient) saveSearch(data clSearch) (clSearch, error) {
 	return clSearch{ID: 1, Name: data.Name, URL: data.URL, Confirmed: false}, nil
 }
-func (m *mockDBClient) getAllSearches() ([]clSearch, error) {
+func (m *mockDBClient) getSearchMulti() ([]clSearch, error) {
 	return []clSearch{
 		{ID: 1, Name: "Test seach 1", URL: "www.testing.com", Confirmed: false},
 		{ID: 1, Name: "Test search 2", URL: "www.bigpotatotest.com", Confirmed: false},
@@ -112,18 +112,18 @@ func (m *mockDBClient) deleteSearch(id int) error {
 	return nil
 }
 
-func (m *mockDBClient) saveListings(monitorID int, listings []clListing) error {
+func (m *mockDBClient) saveListingMulti(monitorID int, listings []clListing) error {
 	m.saveListingsCallCount++
 	m.saveListingsCalledWith = listings
 	return nil
 }
-func (m *mockDBClient) deleteListings(monitorID int) error {
+func (m *mockDBClient) deleteListingMulti(monitorID int) error {
 	return nil
 }
-func (m *mockDBClient) getListings(id int) ([]clListing, error) {
+func (m *mockDBClient) getListingMulti(id int) ([]clListing, error) {
 	return []clListing{}, nil
 }
-func (m *mockDBClient) getListingsAfter(id int, date int64) ([]clListing, error) {
+func (m *mockDBClient) getListingMultiAfter(id int, date int64) ([]clListing, error) {
 	output := []clListing{}
 	for _, l := range fakeListings {
 		p, err := strconv.Atoi(l.Price[1:])

@@ -112,7 +112,7 @@ func (s *apiService) handleListing(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	listings, err := s.db.getListingsAfter(ID, int64(unixTimestamp))
+	listings, err := s.db.getListingMultiAfter(ID, int64(unixTimestamp))
 	if err != nil {
 		apiErrorHandler(w, http.StatusInternalServerError, "handleListing", "err retrieving listings from db", err)
 		return
@@ -145,7 +145,7 @@ func (s *apiService) handleListing(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *apiService) handleSearch(w http.ResponseWriter, req *http.Request) {
-	searches, err := s.db.getAllSearches()
+	searches, err := s.db.getSearchMulti()
 	if err != nil {
 		apiErrorHandler(w, http.StatusInternalServerError, "handleSearch", "unable to retrieve data", err)
 		return

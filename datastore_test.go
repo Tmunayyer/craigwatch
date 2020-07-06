@@ -82,7 +82,7 @@ func TestGetAllSearch(t *testing.T) {
 	saved, err := c.saveSearch(args)
 	assert.NoError(t, err)
 
-	records, err := c.getAllSearches()
+	records, err := c.getSearchMulti()
 	assert.NoError(t, err)
 
 	doesExist := false
@@ -117,7 +117,7 @@ func TestDeleteSearch(t *testing.T) {
 	assert.NoError(t, err)
 
 	// make sure its gone
-	records, err := c.getAllSearches()
+	records, err := c.getSearchMulti()
 	assert.NoError(t, err)
 	for _, record := range records {
 		if record.ID == saved.ID {
@@ -134,10 +134,10 @@ func TestSaveListing(t *testing.T) {
 	search, err := c.saveSearch(testSearch)
 	assert.NoError(t, err)
 
-	err = c.saveListings(search.ID, testListings)
+	err = c.saveListingMulti(search.ID, testListings)
 	assert.NoError(t, err)
 
-	savedListings, err := c.getListings(search.ID)
+	savedListings, err := c.getListingMulti(search.ID)
 	assert.NoError(t, err)
 
 	// tests
@@ -146,7 +146,7 @@ func TestSaveListing(t *testing.T) {
 	assert.Equal(t, savedListings[0].DataPID, testListings[0].DataPID)
 	assert.Equal(t, savedListings[1].DataPID, testListings[1].DataPID)
 
-	err = c.deleteListings(search.ID)
+	err = c.deleteListingMulti(search.ID)
 	assert.NoError(t, err)
 	err = c.deleteSearch(search.ID)
 	assert.NoError(t, err)
@@ -161,10 +161,10 @@ func TestGetListing(t *testing.T) {
 		search, err := c.saveSearch(testSearch)
 		assert.NoError(t, err)
 
-		err = c.saveListings(search.ID, testListings)
+		err = c.saveListingMulti(search.ID, testListings)
 		assert.NoError(t, err)
 
-		savedListings, err := c.getListings(search.ID)
+		savedListings, err := c.getListingMulti(search.ID)
 		assert.NoError(t, err)
 
 		// tests
@@ -173,7 +173,7 @@ func TestGetListing(t *testing.T) {
 		assert.Equal(t, savedListings[0].DataPID, testListings[0].DataPID)
 		assert.Equal(t, savedListings[1].DataPID, testListings[1].DataPID)
 
-		err = c.deleteListings(search.ID)
+		err = c.deleteListingMulti(search.ID)
 		assert.NoError(t, err)
 		err = c.deleteSearch(search.ID)
 		assert.NoError(t, err)
@@ -183,13 +183,13 @@ func TestGetListing(t *testing.T) {
 		search, err := c.saveSearch(testSearch)
 		assert.NoError(t, err)
 
-		err = c.saveListings(search.ID, testListings)
+		err = c.saveListingMulti(search.ID, testListings)
 		assert.NoError(t, err)
 
 		unixTime := newUnixDate("2020-05-01 12:00")
 		fmt.Println("the test unix", unixTime)
 
-		savedListings, err := c.getListingsAfter(search.ID, unixTime)
+		savedListings, err := c.getListingMultiAfter(search.ID, unixTime)
 		assert.NoError(t, err)
 
 		// tests
@@ -197,7 +197,7 @@ func TestGetListing(t *testing.T) {
 		// should be ordered by date
 		assert.Equal(t, savedListings[0].DataPID, testListings[0].DataPID)
 
-		err = c.deleteListings(search.ID)
+		err = c.deleteListingMulti(search.ID)
 		assert.NoError(t, err)
 		err = c.deleteSearch(search.ID)
 		assert.NoError(t, err)
