@@ -148,7 +148,7 @@ func TestSaveListing(t *testing.T) {
 
 	err = c.deleteListings(search.ID)
 	assert.NoError(t, err)
-	err = c.deleteListings(search.ID)
+	err = c.deleteSearch(search.ID)
 	assert.NoError(t, err)
 }
 
@@ -175,7 +175,7 @@ func TestGetListing(t *testing.T) {
 
 		err = c.deleteListings(search.ID)
 		assert.NoError(t, err)
-		err = c.deleteListings(search.ID)
+		err = c.deleteSearch(search.ID)
 		assert.NoError(t, err)
 	})
 
@@ -199,8 +199,7 @@ func TestGetListing(t *testing.T) {
 
 		err = c.deleteListings(search.ID)
 		assert.NoError(t, err)
-		err = c.deleteListings(search.ID)
+		err = c.deleteSearch(search.ID)
 		assert.NoError(t, err)
 	})
-
 }
