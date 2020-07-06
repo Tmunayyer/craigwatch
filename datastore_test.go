@@ -46,7 +46,7 @@ func setupDBTestCase(t *testing.T) (connection, func(t *testing.T), error) {
 	return c, teardown, nil
 }
 
-func TestSaveURL(t *testing.T) {
+func TestSaveSearch(t *testing.T) {
 	c, teardown, err := setupDBTestCase(t)
 	assert.NoError(t, err)
 	defer teardown(t)

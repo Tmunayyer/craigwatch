@@ -132,7 +132,7 @@ func (m *mockDBClient) getListingMultiAfter(id int, date int64) ([]clListing, er
 		}
 		listing := clListing{
 			ID:           123456,
-			MonitorID:    fakeSearch.ID,
+			SearchID:     fakeSearch.ID,
 			DataPID:      l.DataPID,
 			DataRepostOf: l.DataRepostOf,
 			UnixDate:     newUnixDate(l.Date),
