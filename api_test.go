@@ -83,6 +83,8 @@ func (m *mockCraigslistClient) GetNewListings(ctx context.Context, url string, d
 }
 
 type mockDBClient struct {
+	saveListingsCallCount  int
+	saveListingsCalledWith []clListing
 }
 
 func (m *mockDBClient) connect() error {
@@ -111,6 +113,8 @@ func (m *mockDBClient) deleteSearch(id int) error {
 }
 
 func (m *mockDBClient) saveListings(monitorID int, listings []clListing) error {
+	m.saveListingsCallCount++
+	m.saveListingsCalledWith = listings
 	return nil
 }
 func (m *mockDBClient) deleteListings(monitorID int) error {
@@ -158,9 +162,6 @@ func (m *mockPollingService) poll(ctx context.Context, search clSearch) {
 	listings := make([]craigslist.Listing, len(fakeListings))
 	copy(listings, fakeListings)
 	m.listings = listings
-}
-func (m *mockPollingService) flush(ID int) ([]craigslist.Listing, error) {
-	return m.listings, nil
 }
 
 func setupTestAPI(t *testing.T) *apiService {

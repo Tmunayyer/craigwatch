@@ -14,12 +14,10 @@ type pollingService interface {
 	initiate(context.Context) error
 	shutdown() error
 	poll(ctx context.Context, search clSearch)
-	flush(ID int) ([]craigslist.Listing, error)
 }
 
 type pollingRecord struct {
 	polledAsOf time.Time
-	listings   []craigslist.Listing
 }
 
 type pollingClient struct {
@@ -62,18 +60,6 @@ func (pc *pollingClient) shutdown() error {
 	return nil
 }
 
-func (pc *pollingClient) flush(ID int) ([]craigslist.Listing, error) {
-	record, has := pc.records[ID]
-	if !has {
-		return []craigslist.Listing{}, fmt.Errorf("invalid ID provided")
-	}
-
-	newRecords := record.listings
-	record.listings = []craigslist.Listing{}
-
-	return newRecords, nil
-}
-
 func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	pc.mu.Lock()
 	record, has := pc.records[search.ID]
@@ -81,14 +67,12 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		// this is a new record, set up accordingly
 		record = &pollingRecord{}
 		pc.records[search.ID] = record
+
+		record.polledAsOf = time.Unix(int64(search.UnixCutoffDate), 0)
 	}
 
-	// the first time, it should be time.Time nil value giving the entire first
-	// page, the second time it should be updated
-	currentCutoff := record.polledAsOf
-
 	fmt.Println("polling:", search.URL)
-	result, err := pc.cl.GetNewListings(ctx, search.URL, currentCutoff)
+	result, err := pc.cl.GetNewListings(ctx, search.URL, record.polledAsOf)
 	if err != nil {
 		fmt.Println("err getting listings from fn poll():", err)
 	}
@@ -126,7 +110,6 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	}
 
 	record.polledAsOf = newCutoff
-	record.listings = append(record.listings, result.Listings...)
 
 	pc.mu.Unlock()
 	time.AfterFunc(time.Duration(60*time.Second), func() { pc.poll(ctx, search) })
