@@ -109,12 +109,13 @@ func (c *client) applySchema() error {
 // =======================
 
 type clSearch struct {
-	ID        int
-	Name      string
-	URL       string
-	Confirmed bool
-	Interval  int
-	CreatedOn time.Time
+	ID             int
+	Name           string
+	URL            string
+	Confirmed      bool
+	Interval       int
+	CreatedOn      time.Time
+	UnixCutoffDate int
 }
 
 type clListing struct {
@@ -176,14 +177,19 @@ func (c *client) getAllSearches() ([]clSearch, error) {
 
 	rows, err := c.db.Query(`
 		select
-			id,
-			name,
-			url,
-			confirmed,
-			interval,
-			created_on
-		from 
-			monitor
+			m.*,
+			l.unix_cutoff_date
+		from
+			monitor m
+		join
+			(
+				select
+					monitor_id,
+					max(unix_date) as "unix_cutoff_date"
+				from listing
+				group by monitor_id
+			) l
+		on l.monitor_id = m.id
 	`)
 
 	if err != nil {
@@ -199,6 +205,7 @@ func (c *client) getAllSearches() ([]clSearch, error) {
 			&q.Confirmed,
 			&q.Interval,
 			&q.CreatedOn,
+			&q.UnixCutoffDate,
 		)
 		if err != nil {
 			return output, err
