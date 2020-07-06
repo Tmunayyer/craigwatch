@@ -34,10 +34,10 @@ func newPollingService(cl craigslist.API, db connection) pollingService {
 		records: make(map[int]*pollingRecord),
 	}
 
-	// err := pc.initiate(context.TODO())
-	// if err != nil {
-	// 	panic(err)
-	// }
+	err := pc.initiate(context.TODO())
+	if err != nil {
+		panic(err)
+	}
 
 	return &pc
 }
