@@ -175,63 +175,6 @@ func setupTestAPI(t *testing.T) *apiService {
 	return newAPIService(&mockCL, &mockDB, &mockPS)
 }
 
-func TestHandleMonitor(t *testing.T) {
-	api := setupTestAPI(t)
-
-	t.Run("post - invalid url", func(t *testing.T) {
-		// make a body
-		type body struct {
-			URL string
-		}
-
-		b := body{URL: badCraigslistURL}
-		data, err := json.Marshal(b)
-		assert.NoError(t, err)
-		reader := bytes.NewReader(data)
-
-		req, err := http.NewRequest(http.MethodPost, "/", reader)
-		assert.NoError(t, err)
-		res := httptest.NewRecorder()
-
-		api.handleMonitor(res, req)
-
-		message, err := ioutil.ReadAll(res.Body)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-		assert.Equal(t, "url provided is not a compatible with craigslist\n", string(message))
-	})
-
-	t.Run("post - recieves data", func(t *testing.T) {
-		// make a body
-		type body struct {
-			ID        int
-			Name      string
-			URL       string
-			Confirmed bool
-		}
-
-		b := body{Name: "test monitor 1", URL: "www.anything.com"}
-		data, err := json.Marshal(b)
-		assert.NoError(t, err)
-		reader := bytes.NewReader(data)
-
-		req, err := http.NewRequest(http.MethodPost, "/", reader)
-		assert.NoError(t, err)
-		res := httptest.NewRecorder()
-
-		// call handelr
-		api.handleMonitor(res, req)
-
-		resBody := body{}
-		readBodyInto(t, res.Body, &resBody)
-
-		assert.Equal(t, http.StatusOK, res.Code)
-		assert.Equal(t, b.Name, resBody.Name)
-		assert.Equal(t, b.URL, resBody.URL)
-		assert.Equal(t, false, resBody.Confirmed)
-	})
-}
-
 func TestHandleListing(t *testing.T) {
 	api := setupTestAPI(t)
 
@@ -260,17 +203,73 @@ func TestHandleListing(t *testing.T) {
 
 func TestHandleSearch(t *testing.T) {
 	api := setupTestAPI(t)
+	t.Run("get - gets a list of searches", func(t *testing.T) {
 
-	req, err := http.NewRequest(http.MethodGet, "/listing?ID=99", nil)
-	assert.NoError(t, err)
-	res := httptest.NewRecorder()
+		req, err := http.NewRequest(http.MethodGet, "/listing?ID=99", nil)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
 
-	api.handleSearch(res, req)
+		api.handleSearch(res, req)
 
-	resBody := []clSearch{}
-	readBodyInto(t, res.Body, &resBody)
+		resBody := []clSearch{}
+		readBodyInto(t, res.Body, &resBody)
 
-	assert.Equal(t, 2, len(resBody))
+		assert.Equal(t, 2, len(resBody))
+	})
+
+	t.Run("post - invalid url", func(t *testing.T) {
+		// make a body
+		type body struct {
+			URL string
+		}
+
+		b := body{URL: badCraigslistURL}
+		data, err := json.Marshal(b)
+		assert.NoError(t, err)
+		reader := bytes.NewReader(data)
+
+		req, err := http.NewRequest(http.MethodPost, "/", reader)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
+
+		api.handleSearch(res, req)
+
+		message, err := ioutil.ReadAll(res.Body)
+
+		assert.Equal(t, http.StatusBadRequest, res.Code)
+		assert.Equal(t, "url provided is not a compatible with craigslist\n", string(message))
+	})
+
+	t.Run("post - recieves data", func(t *testing.T) {
+		// make a body
+		type body struct {
+			ID        int
+			Name      string
+			URL       string
+			Confirmed bool
+		}
+
+		b := body{Name: "test monitor 1", URL: "www.anything.com"}
+		data, err := json.Marshal(b)
+		assert.NoError(t, err)
+		reader := bytes.NewReader(data)
+
+		req, err := http.NewRequest(http.MethodPost, "/", reader)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
+
+		// call handelr
+		api.handleSearch(res, req)
+
+		resBody := body{}
+		readBodyInto(t, res.Body, &resBody)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, b.Name, resBody.Name)
+		assert.Equal(t, b.URL, resBody.URL)
+		assert.Equal(t, false, resBody.Confirmed)
+	})
+
 }
 
 // NOTE: before debugging here, make sure destination field are public

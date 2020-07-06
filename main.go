@@ -29,7 +29,6 @@ func initializeAPI() {
 	ps := newPollingService(cl, db)
 	api := newAPIService(cl, db, ps)
 
-	http.HandleFunc("/api/search", api.handleSearch)
-	http.HandleFunc("/api/monitor", api.handleMonitor)
-	http.HandleFunc("/api/listing", api.handleListing)
+	http.HandleFunc("/api/v1/search", api.handleSearch)
+	http.HandleFunc("/api/v1/listing", api.handleListing)
 }
