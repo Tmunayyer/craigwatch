@@ -8,48 +8,34 @@ import (
 )
 
 func TestPoll(t *testing.T) {
-	// these are defined in api_test.go
-	mockCL := mockCraigslistClient{}
-	mockDB := mockDBClient{}
+	// at this point, I know
+	// - the underlying library returns listings
+	// - the datastore properly saves and retrieves listings
 
-	t.Run("should return listings on first flush call", func(t *testing.T) {
-		mockPoller := newPollingService(&mockCL, &mockDB)
+	// the only thing to test here is the handling of the cutoff date
+	t.Run("should update the polledAsOf property to recent listing", func(t *testing.T) {
+		// these are defined in api_test.go
+		mockCL := mockCraigslistClient{}
+		mockDB := mockDBClient{}
+		mockPoller := &pollingClient{
+			cl:      &mockCL,
+			db:      &mockDB,
+			records: make(map[int]*pollingRecord),
+		}
 
 		s := clSearch{
-			ID:  99,
-			URL: "www.testing.com",
+			ID:             99,
+			URL:            "www.testing.com",
+			UnixCutoffDate: 0,
 		}
 
 		mockPoller.poll(context.Background(), s)
 
-		listings, err := mockPoller.flush(s.ID)
-		assert.NoError(t, err)
-		assert.Greater(t, len(listings), 0)
-	})
-}
-
-func TestFlush(t *testing.T) {
-	// defined in api_test.go
-	mockCL := mockCraigslistClient{}
-	mockDB := mockDBClient{}
-
-	t.Run("should NOT return listings on subsequent calls", func(t *testing.T) {
-		mockPoller := newPollingService(&mockCL, &mockDB)
-
-		s := clSearch{
-			ID:  99,
-			URL: "www.testing.com",
-		}
-
-		// put something into accumulator
-		mockPoller.poll(context.Background(), s)
-
-		listings, err := mockPoller.flush(s.ID)
-		assert.NoError(t, err)
-		assert.Greater(t, len(listings), 0)
-
-		listings, err = mockPoller.flush(s.ID)
-		assert.NoError(t, err)
-		assert.Equal(t, 0, len(listings))
+		r, has := mockPoller.records[s.ID]
+		assert.True(t, has)
+		// - fake listings most recent listing date: 2020-01-02 16:04 and should be the polled as of
+		//   after poll is run
+		// - add 1 to account for adding 1 second in poll
+		assert.Equal(t, newUnixDate(fakeListings[0].Date)+1, r.polledAsOf.Unix())
 	})
 }

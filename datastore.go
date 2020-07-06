@@ -25,6 +25,7 @@ type connection interface {
 	saveListings(monitorID int, listings []clListing) error
 	deleteListings(monitorID int) error
 	getListings(id int) ([]clListing, error)
+	getListingsAfter(id int, unixDate int64) ([]clListing, error)
 }
 
 type client struct {
@@ -108,12 +109,13 @@ func (c *client) applySchema() error {
 // =======================
 
 type clSearch struct {
-	ID        int
-	Name      string
-	URL       string
-	Confirmed bool
-	Interval  int
-	CreatedOn time.Time
+	ID             int
+	Name           string
+	URL            string
+	Confirmed      bool
+	Interval       int
+	CreatedOn      time.Time
+	UnixCutoffDate int
 }
 
 type clListing struct {
@@ -121,7 +123,7 @@ type clListing struct {
 	MonitorID    int
 	DataPID      string
 	DataRepostOf string
-	Date         time.Time
+	UnixDate     int64
 	Title        string
 	Link         string
 	Price        int
@@ -175,14 +177,19 @@ func (c *client) getAllSearches() ([]clSearch, error) {
 
 	rows, err := c.db.Query(`
 		select
-			id,
-			name,
-			url,
-			confirmed,
-			interval,
-			created_on
-		from 
-			monitor
+			m.*,
+			coalesce(l.unix_cutoff_date, '0')
+		from
+			monitor m
+		left join
+			(
+				select
+					monitor_id,
+					max(unix_date) as "unix_cutoff_date"
+				from listing
+				group by monitor_id
+			) l
+		on l.monitor_id = m.id
 	`)
 
 	if err != nil {
@@ -198,6 +205,7 @@ func (c *client) getAllSearches() ([]clSearch, error) {
 			&q.Confirmed,
 			&q.Interval,
 			&q.CreatedOn,
+			&q.UnixCutoffDate,
 		)
 		if err != nil {
 			return output, err
@@ -235,14 +243,14 @@ func (c *client) saveListings(monitorID int, listings []clListing) error {
 		log.Fatal(err)
 	}
 
-	stmt, err := txn.Prepare(pq.CopyIn("listing", "monitor_id", "data_pid", "data_repost_of", "date", "title", "link", "price", "hood"))
+	stmt, err := txn.Prepare(pq.CopyIn("listing", "monitor_id", "data_pid", "data_repost_of", "unix_date", "title", "link", "price", "hood"))
 	if err != nil {
 		fmt.Println("from the formatting")
 		return err
 	}
 
 	for _, l := range listings {
-		_, err = stmt.Exec(monitorID, l.DataPID, l.DataRepostOf, l.Date, l.Title, l.Link, l.Price, l.Hood)
+		_, err = stmt.Exec(monitorID, l.DataPID, l.DataRepostOf, l.UnixDate, l.Title, l.Link, l.Price, l.Hood)
 
 		if err != nil {
 			fmt.Println("from the executing")
@@ -294,7 +302,7 @@ func (c *client) getListings(monitorID int) ([]clListing, error) {
 		where
 			monitor_id = $1
 		order by
-			date desc;
+			unix_date desc;
 	`, monitorID)
 
 	if err != nil {
@@ -308,7 +316,63 @@ func (c *client) getListings(monitorID int) ([]clListing, error) {
 			&q.MonitorID,
 			&q.DataPID,
 			&q.DataRepostOf,
-			&q.Date,
+			&q.UnixDate,
+			&q.Title,
+			&q.Link,
+			&q.Price,
+			&q.Hood,
+		)
+		if err != nil {
+			return output, err
+		}
+
+		output = append(output, q)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
+}
+
+func (c *client) getListingsAfter(monitorID int, unixDate int64) ([]clListing, error) {
+	output := []clListing{}
+
+	rows, err := c.db.Query(`
+		select
+			id,
+			monitor_id,
+			data_pid,
+			data_repost_of,
+			unix_date,
+			title,
+			link,
+			price,
+			hood
+		from 
+			listing
+		where
+			monitor_id = $1
+		and
+			unix_date > $2
+		order by
+			unix_date desc;
+	`, monitorID, unixDate)
+
+	if err != nil {
+		return output, err
+	}
+
+	for rows.Next() {
+		q := clListing{}
+		err := rows.Scan(
+			&q.ID,
+			&q.MonitorID,
+			&q.DataPID,
+			&q.DataRepostOf,
+			&q.UnixDate,
 			&q.Title,
 			&q.Link,
 			&q.Price,

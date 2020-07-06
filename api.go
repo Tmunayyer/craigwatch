@@ -77,21 +77,44 @@ func (s *apiService) handleMonitor(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *apiService) handleListing(w http.ResponseWriter, req *http.Request) {
+	if req.Method != "GET" {
+		apiErrorHandler(w, http.StatusNotImplemented, "handleListing", "method not supported: "+req.Method, nil)
+		return
+	}
+
 	type resObject struct {
 		HasNewListings bool
-		Listings       []craigslist.Listing
+		Listings       []clListing
 	}
 
 	queryValues := req.URL.Query()
-	ID, err := strconv.Atoi(queryValues["ID"][0])
+	qValID, has := queryValues["ID"]
+	if !has {
+		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "missing query value: ID", nil)
+		return
+	}
+
+	ID, err := strconv.Atoi(qValID[0])
 	if err != nil {
 		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid id provided", err)
 		return
 	}
 
-	listings, err := s.ps.flush(ID)
+	qValDatetime, has := queryValues["Datetime"]
+	if !has {
+		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "missing query value: Datetime", nil)
+		return
+	}
+
+	unixTimestamp, err := strconv.Atoi(qValDatetime[0])
 	if err != nil {
-		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid id provided", err)
+		apiErrorHandler(w, http.StatusBadRequest, "handleListing", "invalid Datetime provided", err)
+		return
+	}
+
+	listings, err := s.db.getListingsAfter(ID, int64(unixTimestamp))
+	if err != nil {
+		apiErrorHandler(w, http.StatusInternalServerError, "handleListing", "err retrieving listings from db", err)
 		return
 	}
 
