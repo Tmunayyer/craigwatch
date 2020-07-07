@@ -20,5 +20,8 @@
 # node packages
 node_modules
 
+# json lock
+package-lock.json
+
 # builds
 bundle.js
