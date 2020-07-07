@@ -4,6 +4,7 @@ A tool to monitor craigslist searches and so much more.
 ## Table of Contents
 
 - [Setting Up](#setting-up)
+- [API Documentation](./documentation/api/table_of_contents.MD)
 
 ## Setting Up
 
