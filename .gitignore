@@ -16,3 +16,9 @@
 
 # Environmental variables
 *.env
+
+# node packages
+node_modules
+
+# builds
+bundle.js
