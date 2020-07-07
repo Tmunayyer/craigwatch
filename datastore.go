@@ -12,20 +12,21 @@ import (
 	"github.com/lib/pq"
 )
 
-// TODO: Cleanup this interface a bit, start centing things around table
-// TODO: rename montior/URL stuff to search
+// TODO: rename monitor table to search
 type connection interface {
 	connect() error
 	shutdown() error
 	testConnection() error
 	applySchema() error
+
 	saveSearch(clSearch) (clSearch, error)
 	deleteSearch(id int) error
-	getAllSearches() ([]clSearch, error)
-	saveListings(monitorID int, listings []clListing) error
-	deleteListings(monitorID int) error
-	getListings(id int) ([]clListing, error)
-	getListingsAfter(id int, unixDate int64) ([]clListing, error)
+	getSearchMulti() ([]clSearch, error)
+
+	saveListingMulti(monitorID int, listings []clListing) error
+	deleteListingMulti(monitorID int) error
+	getListingMulti(id int) ([]clListing, error)
+	getListingMultiAfter(id int, unixDate int64) ([]clListing, error)
 }
 
 type client struct {
@@ -120,7 +121,7 @@ type clSearch struct {
 
 type clListing struct {
 	ID           int
-	MonitorID    int
+	SearchID     int
 	DataPID      string
 	DataRepostOf string
 	UnixDate     int64
@@ -138,12 +139,12 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 	output := clSearch{}
 
 	rows, err := c.db.Query(`
-		insert into monitor
-			(name, url, confirmed, created_on)
+		insert into search
+			(name, url, created_on)
 		values
-			($1, $2, $3, Now())
+			($1, $2, Now())
 		returning *
-	`, data.Name, data.URL, false)
+	`, data.Name, data.URL)
 	defer rows.Close()
 
 	if err != nil {
@@ -155,8 +156,6 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 			&output.ID,
 			&output.Name,
 			&output.URL,
-			&output.Confirmed,
-			&output.Interval,
 			&output.CreatedOn,
 		)
 		if err != nil {
@@ -172,24 +171,24 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 	return output, nil
 }
 
-func (c *client) getAllSearches() ([]clSearch, error) {
+func (c *client) getSearchMulti() ([]clSearch, error) {
 	output := []clSearch{}
 
 	rows, err := c.db.Query(`
 		select
-			m.*,
+			s.*,
 			coalesce(l.unix_cutoff_date, '0')
 		from
-			monitor m
+			search s
 		left join
 			(
 				select
-					monitor_id,
+					search_id,
 					max(unix_date) as "unix_cutoff_date"
 				from listing
-				group by monitor_id
+				group by search_id
 			) l
-		on l.monitor_id = m.id
+		on l.search_id = s.id
 	`)
 
 	if err != nil {
@@ -202,8 +201,6 @@ func (c *client) getAllSearches() ([]clSearch, error) {
 			&q.ID,
 			&q.Name,
 			&q.URL,
-			&q.Confirmed,
-			&q.Interval,
 			&q.CreatedOn,
 			&q.UnixCutoffDate,
 		)
@@ -225,7 +222,7 @@ func (c *client) getAllSearches() ([]clSearch, error) {
 func (c *client) deleteSearch(id int) error {
 	_, err := c.db.Query(`
 		delete from 
-			monitor
+			search
 		where
 			id = $1
 	`, id)
@@ -237,20 +234,20 @@ func (c *client) deleteSearch(id int) error {
 	return nil
 }
 
-func (c *client) saveListings(monitorID int, listings []clListing) error {
+func (c *client) saveListingMulti(searchID int, listings []clListing) error {
 	txn, err := c.db.Begin()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	stmt, err := txn.Prepare(pq.CopyIn("listing", "monitor_id", "data_pid", "data_repost_of", "unix_date", "title", "link", "price", "hood"))
+	stmt, err := txn.Prepare(pq.CopyIn("listing", "search_id", "data_pid", "data_repost_of", "unix_date", "title", "link", "price", "hood"))
 	if err != nil {
 		fmt.Println("from the formatting")
 		return err
 	}
 
 	for _, l := range listings {
-		_, err = stmt.Exec(monitorID, l.DataPID, l.DataRepostOf, l.UnixDate, l.Title, l.Link, l.Price, l.Hood)
+		_, err = stmt.Exec(searchID, l.DataPID, l.DataRepostOf, l.UnixDate, l.Title, l.Link, l.Price, l.Hood)
 
 		if err != nil {
 			fmt.Println("from the executing")
@@ -276,13 +273,13 @@ func (c *client) saveListings(monitorID int, listings []clListing) error {
 	return nil
 }
 
-func (c *client) deleteListings(monitorID int) error {
+func (c *client) deleteListingMulti(searchID int) error {
 	_, err := c.db.Query(`
 		delete from 
 			listing
 		where
-			monitor_id = $1
-	`, monitorID)
+			search_id = $1
+	`, searchID)
 
 	if err != nil {
 		return err
@@ -291,7 +288,7 @@ func (c *client) deleteListings(monitorID int) error {
 	return nil
 }
 
-func (c *client) getListings(monitorID int) ([]clListing, error) {
+func (c *client) getListingMulti(searchID int) ([]clListing, error) {
 	output := []clListing{}
 
 	rows, err := c.db.Query(`
@@ -300,10 +297,10 @@ func (c *client) getListings(monitorID int) ([]clListing, error) {
 		from 
 			listing
 		where
-			monitor_id = $1
+			search_id = $1
 		order by
 			unix_date desc;
-	`, monitorID)
+	`, searchID)
 
 	if err != nil {
 		return output, err
@@ -313,7 +310,7 @@ func (c *client) getListings(monitorID int) ([]clListing, error) {
 		q := clListing{}
 		err := rows.Scan(
 			&q.ID,
-			&q.MonitorID,
+			&q.SearchID,
 			&q.DataPID,
 			&q.DataRepostOf,
 			&q.UnixDate,
@@ -337,13 +334,13 @@ func (c *client) getListings(monitorID int) ([]clListing, error) {
 	return output, nil
 }
 
-func (c *client) getListingsAfter(monitorID int, unixDate int64) ([]clListing, error) {
+func (c *client) getListingMultiAfter(searchID int, unixDate int64) ([]clListing, error) {
 	output := []clListing{}
 
 	rows, err := c.db.Query(`
 		select
 			id,
-			monitor_id,
+			search_id,
 			data_pid,
 			data_repost_of,
 			unix_date,
@@ -354,12 +351,12 @@ func (c *client) getListingsAfter(monitorID int, unixDate int64) ([]clListing, e
 		from 
 			listing
 		where
-			monitor_id = $1
+			search_id = $1
 		and
 			unix_date > $2
 		order by
 			unix_date desc;
-	`, monitorID, unixDate)
+	`, searchID, unixDate)
 
 	if err != nil {
 		return output, err
@@ -369,7 +366,7 @@ func (c *client) getListingsAfter(monitorID int, unixDate int64) ([]clListing, e
 		q := clListing{}
 		err := rows.Scan(
 			&q.ID,
-			&q.MonitorID,
+			&q.SearchID,
 			&q.DataPID,
 			&q.DataRepostOf,
 			&q.UnixDate,

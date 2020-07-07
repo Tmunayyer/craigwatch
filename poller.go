@@ -43,7 +43,7 @@ func newPollingService(cl craigslist.API, db connection) pollingService {
 }
 
 func (pc *pollingClient) initiate(ctx context.Context) error {
-	searches, err := pc.db.getAllSearches()
+	searches, err := pc.db.getSearchMulti()
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 				Hood:         l.Hood,
 			})
 		}
-		pc.db.saveListings(search.ID, listingsToSave)
+		pc.db.saveListingMulti(search.ID, listingsToSave)
 
 		layout := "2006-01-02 15:04"
 		newCutoff, err = time.Parse(layout, result.Listings[0].Date)
