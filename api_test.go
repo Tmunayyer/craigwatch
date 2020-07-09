@@ -102,6 +102,9 @@ func (m *mockDBClient) applySchema() error {
 func (m *mockDBClient) saveSearch(data clSearch) (clSearch, error) {
 	return clSearch{ID: 1, Name: data.Name, URL: data.URL, Confirmed: false}, nil
 }
+func (m *mockDBClient) getSearch(searchID int) (clSearch, error) {
+	return clSearch{}, nil
+}
 func (m *mockDBClient) getSearchMulti() ([]clSearch, error) {
 	return []clSearch{
 		{ID: 1, Name: "Test seach 1", URL: "www.testing.com", Confirmed: false},

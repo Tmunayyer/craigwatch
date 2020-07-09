@@ -113,6 +113,31 @@ func (s *apiService) handleSearch(w http.ResponseWriter, req *http.Request) {
 	//== GET ==
 	//=========
 	if req.Method == http.MethodGet {
+		queryValues := req.URL.Query()
+		qValID, has := queryValues["ID"]
+		if has {
+			searchID, err := strconv.Atoi(qValID[0])
+			if err != nil {
+				apiErrorHandler(w, http.StatusBadRequest, "handleSearch", "invalid ID sent", err)
+				return
+			}
+
+			search, err := s.db.getSearch(searchID)
+			if err != nil {
+				apiErrorHandler(w, http.StatusInternalServerError, "handleSearch", "unable to retrieve data", err)
+				return
+			}
+
+			data, err := json.Marshal(search)
+			if err != nil {
+				apiErrorHandler(w, http.StatusInternalServerError, "handleSearch", "unable to marshal data", err)
+				return
+			}
+
+			w.Write(data)
+			return
+		}
+
 		searches, err := s.db.getSearchMulti()
 		if err != nil {
 			apiErrorHandler(w, http.StatusInternalServerError, "handleSearch", "unable to retrieve data", err)
