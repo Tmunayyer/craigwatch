@@ -15,7 +15,7 @@ const router = new VueRouter({
     { path: '/', component: Home },
     { path: '/search', component: SearchForm },
     { path: '/about', component: About },
-    { path: '/results/:ID', component: Results }
+    { path: '/result/:ID', component: Results }
   ]
 });
 
