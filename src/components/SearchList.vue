@@ -1,5 +1,10 @@
 <template>
-  <h1>search list</h1>
+  <ul id="searchList">
+    <li v-for="search in searchList" :key="search.ID" v-on:click="redirector(search)">
+      <div>Name: {{ search.Name }}</div>
+      <div>Created On: {{search.CreatedOn}}</div>
+    </li>
+  </ul>
 </template>
 
 <script>
@@ -7,9 +12,13 @@ export default {
   name: "SearchList",
   data() {
     return {
-      name: "",
-      url: ""
+      searchList: []
     };
+  },
+  beforeMount: async function() {
+    const searchList = await this.getSearchList();
+    console.log("the searchlist:", searchList);
+    this.searchList = searchList;
   },
   methods: {
     redirector: function(search) {
@@ -20,7 +29,7 @@ export default {
       const response = await fetch(apiUrl);
       const body = await response.json();
 
-      console.log("the body:", body);
+      return body;
     }
   }
 };
