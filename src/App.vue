@@ -1,21 +1,17 @@
 <template>
   <div id="app">
-    <ol class="menu">
-      <li class="menuItem">
-        <router-link to="/search">search</router-link>
-      </li>
-      <li class="menuItem">
-        <router-link to="/monitor">monitor</router-link>
-      </li>
-    </ol>
-    <img src="craigswatchLogo3.png" />
+    <Navbar />
     <router-view></router-view>
   </div>
 </template>
 
 <script>
+import Navbar from "./components/Navbar.vue";
 export default {
-  name: "App"
+  name: "App",
+  components: {
+    Navbar
+  }
 };
 </script>
 
