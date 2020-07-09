@@ -17,6 +17,8 @@
 <script>
 import Listing from "./Listing.vue";
 
+let _RESULT_FETCH_INTERVAL; // to track the interval for cleanup later
+
 export default {
   name: "Results",
   components: {
@@ -28,35 +30,51 @@ export default {
       newListings: [],
       searchID: this.$route.params.ID,
       // UnixTimestamp is the cutoff to use when requesting only new listings, should be 0 on load
-      unixTimestamp: 0
+      unixDate: 0
     };
   },
   beforeMount: async function() {
-    const resultList = await this.getResultList();
+    let initResultList = await this.getResultList();
 
-    this.resultList = resultList.Listings;
+    if (initResultList.HasNewListings) {
+      this.unixDate = initResultList.Listings[0].UnixDate;
+      this.resultList = initResultList.Listings;
+    } else {
+      setTimeout(async () => {
+        // on new search created, the backend takes a second to get listings.
+        // because of this, retry after 3 seconds and then spawn interval.
+        initResultList = await this.getResultList();
+
+        if (initResultList.HasNewListings) {
+          this.unixDate = initResultList.Listings[0].UnixDate;
+          this.resultList = initResultList.Listings;
+        }
+      }, 3000);
+    }
+
+    // update list every 60 seconds
+    _RESULT_FETCH_INTERVAL = setInterval(async () => {
+      const updatedResultList = await this.getResultList();
+
+      if (updatedResultList.HasNewListings) {
+        this.unixDate = updatedResultList.Listings[0].UnixDate;
+        this.resultList = updatedResultList.Listings.concat(
+          resultList.Listings
+        );
+      }
+    }, 60000);
+  },
+  beforeDestroy: function() {
+    clearInterval(_RESULT_FETCH_INTERVAL);
   },
   methods: {
     getResultList: async function getResultList() {
       const response = await fetch(
-        `/api/v1/listing?ID=${this.searchID}&Datetime=${this.unixTimestamp}`
+        `/api/v1/listing?ID=${this.searchID}&Datetime=${this.unixDate}`
       );
       const list = await response.json();
 
       return list;
-    },
-    update: () => {
-      async function getSearchList() {
-        const response = await fetch(
-          `/api/v1/listing?ID=${this.searchId}&Datetime=${Date.now()}`
-        );
-        return await response.json();
-        //post new listings or j the price somewhere too?
-      }
-      var results = getSearchList();
-      if (results.HasNewListings) {
-        this.listings = this.newListings.concat(results.Listings);
-      }
     }
   }
 };

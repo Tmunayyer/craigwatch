@@ -17,7 +17,6 @@ export default {
   },
   beforeMount: async function() {
     const searchList = await this.getSearchList();
-    console.log("the searchlist:", searchList);
     this.searchList = searchList;
   },
   methods: {
