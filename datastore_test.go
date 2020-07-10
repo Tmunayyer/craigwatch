@@ -69,6 +69,30 @@ func TestSaveSearch(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestGetSearch(t *testing.T) {
+	c, teardown, err := setupDBTestCase(t)
+	assert.NoError(t, err)
+	defer teardown(t)
+
+	args := clSearch{
+		Name: "test getSearch 0100",
+		URL:  "www.TESTING.com",
+	}
+
+	saved, err := c.saveSearch(args)
+	assert.NoError(t, err)
+
+	record, err := c.getSearch(saved.ID)
+	assert.NoError(t, err)
+
+	assert.Equal(t, args.Name, record.Name)
+	assert.Equal(t, args.URL, record.URL)
+
+	// delete the saved records
+	err = c.deleteSearch(saved.ID)
+	assert.NoError(t, err)
+}
+
 func TestGetSearchMulti(t *testing.T) {
 	c, teardown, err := setupDBTestCase(t)
 	assert.NoError(t, err)
