@@ -28,6 +28,8 @@ type connection interface {
 	deleteListingMulti(monitorID int) error
 	getListingMulti(id int) ([]clListing, error)
 	getListingMultiAfter(id int, unixDate int64) ([]clListing, error)
+
+	getSearchActivity(searchID int) (searchActivity, error)
 }
 
 type client struct {
@@ -127,8 +129,8 @@ type clSearch struct {
 type searchActivity struct {
 	ID        int
 	InSeconds int
-	InMinutes int
-	InHours   int
+	InMinutes float32
+	InHours   float32
 }
 
 type clListing struct {
