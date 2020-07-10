@@ -124,6 +124,13 @@ type clSearch struct {
 	UnixCutoffDate int
 }
 
+type searchActivity struct {
+	ID        int
+	InSeconds int
+	InMinutes int
+	InHours   int
+}
+
 type clListing struct {
 	ID           int
 	SearchID     int
@@ -292,7 +299,7 @@ func (c *client) saveListingMulti(searchID int, listings []clListing) error {
 
 	stmt, err := txn.Prepare(pq.CopyIn("listing", "search_id", "data_pid", "data_repost_of", "unix_date", "title", "link", "price", "hood"))
 	if err != nil {
-		fmt.Println("from the formatting")
+		fmt.Println("from the formatting", err)
 		return err
 	}
 
@@ -430,6 +437,60 @@ func (c *client) getListingMultiAfter(searchID int, unixDate int64) ([]clListing
 		}
 
 		output = append(output, q)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
+}
+
+func (c *client) getSearchActivity(searchID int) (searchActivity, error) {
+	output := searchActivity{}
+
+	rows, err := c.db.Query(`
+		with order_by_date as (
+			select 
+				l.*
+			from listing l
+			left join search s
+			on l.search_id = s.id
+			where s.id = $1
+			order by unix_date desc
+		),
+		
+		time_between_posts as ( 
+			select
+				ao.search_id,
+				unix_date - lead(unix_date, 1) over (order by unix_date desc) as time_between
+			from order_by_date ao
+		)
+		
+		select
+			tbp.search_id,
+			round(avg(tbp.time_between)) as in_seconds,
+			round(avg(tbp.time_between) / 60, 2) as in_minutes,
+			round(avg(tbp.time_between) / 60 / 60, 2) as in_hours
+		from time_between_posts tbp
+		group by tbp.search_id;
+	`, searchID)
+
+	if err != nil {
+		return output, err
+	}
+
+	for rows.Next() {
+		err := rows.Scan(
+			&output.ID,
+			&output.InSeconds,
+			&output.InMinutes,
+			&output.InHours,
+		)
+		if err != nil {
+			return output, err
+		}
 	}
 
 	err = rows.Err()
