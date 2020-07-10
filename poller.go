@@ -82,17 +82,21 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	if len(result.Listings) > 0 {
 		listingsToSave := []clListing{}
 		for _, l := range result.Listings {
-			p, err := strconv.Atoi(l.Price[1:])
-			if err != nil {
-				fmt.Println("err converting from fn poll():", err)
+			var price int = 0
+			if len(l.Price) > 0 {
+				price, err = strconv.Atoi(l.Price[1:])
+				if err != nil {
+					fmt.Println("err converting from fn poll():", err)
+				}
 			}
+
 			listingsToSave = append(listingsToSave, clListing{
 				DataPID:      l.DataPID,
 				DataRepostOf: l.DataRepostOf,
 				UnixDate:     newUnixDate(l.Date),
 				Title:        l.Title,
 				Link:         l.Link,
-				Price:        p,
+				Price:        price,
 				Hood:         l.Hood,
 			})
 		}
