@@ -102,6 +102,16 @@ func (m *mockDBClient) applySchema() error {
 func (m *mockDBClient) saveSearch(data clSearch) (clSearch, error) {
 	return clSearch{ID: 1, Name: data.Name, URL: data.URL, Confirmed: false}, nil
 }
+func (m *mockDBClient) getSearch(searchID int) (clSearch, error) {
+	if searchID == 99 {
+		return clSearch{
+			ID:   1,
+			Name: "Test seach 1",
+			URL:  "www.testing.com",
+		}, nil
+	}
+	return clSearch{}, nil
+}
 func (m *mockDBClient) getSearchMulti() ([]clSearch, error) {
 	return []clSearch{
 		{ID: 1, Name: "Test seach 1", URL: "www.testing.com", Confirmed: false},
@@ -203,9 +213,21 @@ func TestHandleListing(t *testing.T) {
 
 func TestHandleSearch(t *testing.T) {
 	api := setupTestAPI(t)
-	t.Run("get - gets a list of searches", func(t *testing.T) {
+	t.Run("get - gets a single search record", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/api/v1/search?ID=99", nil)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
 
-		req, err := http.NewRequest(http.MethodGet, "/listing?ID=99", nil)
+		api.handleSearch(res, req)
+
+		resBody := clSearch{}
+		readBodyInto(t, res.Body, &resBody)
+
+		assert.Equal(t, resBody.Name, "Test seach 1")
+	})
+
+	t.Run("get - gets a list of searches", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/api/v1/search", nil)
 		assert.NoError(t, err)
 		res := httptest.NewRecorder()
 

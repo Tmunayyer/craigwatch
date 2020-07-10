@@ -21,6 +21,7 @@ type connection interface {
 
 	saveSearch(clSearch) (clSearch, error)
 	deleteSearch(id int) error
+	getSearch(searchID int) (clSearch, error)
 	getSearchMulti() ([]clSearch, error)
 
 	saveListingMulti(monitorID int, listings []clListing) error
@@ -157,6 +158,52 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 			&output.Name,
 			&output.URL,
 			&output.CreatedOn,
+		)
+		if err != nil {
+			return output, err
+		}
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
+}
+
+func (c *client) getSearch(searchID int) (clSearch, error) {
+	output := clSearch{}
+
+	rows, err := c.db.Query(`
+		select
+			s.*,
+			coalesce(l.unix_cutoff_date, '0')
+		from
+			search s
+		left join
+			(
+				select
+					search_id,
+					max(unix_date) as "unix_cutoff_date"
+				from listing
+				group by search_id
+			) l
+		on l.search_id = s.id
+		where s.id = $1
+	`, searchID)
+
+	if err != nil {
+		return output, err
+	}
+
+	for rows.Next() {
+		err := rows.Scan(
+			&output.ID,
+			&output.Name,
+			&output.URL,
+			&output.CreatedOn,
+			&output.UnixCutoffDate,
 		)
 		if err != nil {
 			return output, err
