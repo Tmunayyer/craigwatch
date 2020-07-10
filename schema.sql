@@ -1,7 +1,7 @@
 create table if not exists search (
 	id serial primary key,
     "name" text,
-    "url" text,
+    "url" text UNIQUE NOT NULL,
     created_on  timestamptz
 );
 

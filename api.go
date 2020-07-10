@@ -183,7 +183,11 @@ func (s *apiService) handleSearch(w http.ResponseWriter, req *http.Request) {
 			URL:  body.URL,
 		})
 		if err != nil {
-			apiErrorHandler(w, http.StatusInternalServerError, "handleMonitor", "could not save the information", err)
+			if err.Error() == duplicateURLErrorMessage {
+				apiErrorHandler(w, http.StatusBadRequest, "handleMonitor", "URLs must be unique", err)
+			} else {
+				apiErrorHandler(w, http.StatusInternalServerError, "handleMonitor", "could not save the information", err)
+			}
 			return
 		}
 
