@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -83,6 +84,8 @@ func (m *mockCraigslistClient) GetNewListings(ctx context.Context, url string, d
 }
 
 type mockDBClient struct {
+	saveSearchCallCount    int
+	saveSearchURLs         map[string]clSearch
 	saveListingsCallCount  int
 	saveListingsCalledWith []clListing
 }
@@ -100,7 +103,18 @@ func (m *mockDBClient) applySchema() error {
 	return nil
 }
 func (m *mockDBClient) saveSearch(data clSearch) (clSearch, error) {
-	return clSearch{ID: 1, Name: data.Name, URL: data.URL, Confirmed: false}, nil
+	if m.saveSearchURLs == nil {
+		m.saveSearchURLs = make(map[string]clSearch)
+	}
+
+	_, has := m.saveSearchURLs[data.URL]
+	if has {
+		return data, errors.New(duplicateURLErrorMessage)
+	}
+
+	newRecord := clSearch{ID: 1, Name: data.Name, URL: data.URL, Confirmed: false}
+	m.saveSearchURLs[data.URL] = newRecord
+	return newRecord, nil
 }
 func (m *mockDBClient) getSearch(searchID int) (clSearch, error) {
 	if searchID == 99 {
@@ -239,29 +253,6 @@ func TestHandleSearch(t *testing.T) {
 		assert.Equal(t, 2, len(resBody))
 	})
 
-	t.Run("post - invalid url", func(t *testing.T) {
-		// make a body
-		type body struct {
-			URL string
-		}
-
-		b := body{URL: badCraigslistURL}
-		data, err := json.Marshal(b)
-		assert.NoError(t, err)
-		reader := bytes.NewReader(data)
-
-		req, err := http.NewRequest(http.MethodPost, "/", reader)
-		assert.NoError(t, err)
-		res := httptest.NewRecorder()
-
-		api.handleSearch(res, req)
-
-		message, err := ioutil.ReadAll(res.Body)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-		assert.Equal(t, "url provided is not a compatible with craigslist\n", string(message))
-	})
-
 	t.Run("post - recieves data", func(t *testing.T) {
 		// make a body
 		type body struct {
@@ -290,6 +281,71 @@ func TestHandleSearch(t *testing.T) {
 		assert.Equal(t, b.Name, resBody.Name)
 		assert.Equal(t, b.URL, resBody.URL)
 		assert.Equal(t, false, resBody.Confirmed)
+	})
+
+	t.Run("post - invalid url", func(t *testing.T) {
+		type body struct {
+			Name string
+			URL  string
+		}
+
+		b := body{Name: "badurl", URL: badCraigslistURL}
+		data, err := json.Marshal(b)
+		assert.NoError(t, err)
+		reader := bytes.NewReader(data)
+
+		req, err := http.NewRequest(http.MethodPost, "/", reader)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
+
+		api.handleSearch(res, req)
+
+		message, err := ioutil.ReadAll(res.Body)
+
+		assert.Equal(t, http.StatusBadRequest, res.Code)
+		assert.Equal(t, "url provided is not a compatible with craigslist\n", string(message))
+	})
+
+	t.Run("post - should not accept duplicate urls", func(t *testing.T) {
+		type body struct {
+			Name string
+			URL  string
+		}
+
+		// ROUND 1
+		b := body{Name: "goodurl", URL: "www.goodurl.com"}
+		data, err := json.Marshal(b)
+		assert.NoError(t, err)
+		reader := bytes.NewReader(data)
+
+		req, err := http.NewRequest(http.MethodPost, "/", reader)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
+
+		api.handleSearch(res, req)
+
+		resBody := clSearch{}
+		readBodyInto(t, res.Body, &resBody)
+
+		assert.Greater(t, resBody.ID, 0)
+
+		// ROUND 2
+		b = body{Name: "goodurl", URL: "www.goodurl.com"}
+		data, err = json.Marshal(b)
+		assert.NoError(t, err)
+		reader = bytes.NewReader(data)
+
+		req, err = http.NewRequest(http.MethodPost, "/", reader)
+		assert.NoError(t, err)
+		res = httptest.NewRecorder()
+
+		api.handleSearch(res, req)
+
+		message, err := ioutil.ReadAll(res.Body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "URLs must be unique\n", string(message))
+
 	})
 
 }

@@ -52,6 +52,10 @@ func newDBClient() connection {
 	return &c
 }
 
+const (
+	duplicateURLErrorMessage = `pq: duplicate key value violates unique constraint "search_url_key"`
+)
+
 // Connect to the database
 // connect will set up the connection and store the connection string
 // for reference.
@@ -140,17 +144,16 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 	output := clSearch{}
 
 	rows, err := c.db.Query(`
-		insert into search
-			(name, url, created_on)
-		values
-			($1, $2, Now())
-		returning *
+	insert into search
+		(name, url, created_on)
+	values
+		($1, $2, Now())
+	returning *
 	`, data.Name, data.URL)
-	defer rows.Close()
-
 	if err != nil {
 		return output, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		err := rows.Scan(
