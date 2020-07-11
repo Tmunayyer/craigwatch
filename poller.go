@@ -81,6 +81,8 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	newCutoff := record.polledAsOf
 	if len(result.Listings) > 0 {
 		listingsToSave := []clListing{}
+		var maxUnixDate int64
+
 		for _, l := range result.Listings {
 			var price int = 0
 			if len(l.Price) > 0 {
@@ -90,21 +92,28 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 				}
 			}
 
+			unixDate := newUnixDate(l.Date)
+			if unixDate > maxUnixDate {
+				maxUnixDate = unixDate
+			}
+
 			listingsToSave = append(listingsToSave, clListing{
 				DataPID:      l.DataPID,
 				DataRepostOf: l.DataRepostOf,
-				UnixDate:     newUnixDate(l.Date),
+				UnixDate:     unixDate,
 				Title:        l.Title,
 				Link:         l.Link,
 				Price:        price,
 				Hood:         l.Hood,
 			})
 		}
+
 		fmt.Println("saving ", len(result.Listings), " new listings...")
 		pc.db.saveListingMulti(search.ID, listingsToSave)
 
+		newCutoff = time.Unix(maxUnixDate, 0)
 		layout := "2006-01-02 15:04"
-		newCutoff, err = time.Parse(layout, result.Listings[0].Date)
+		newCutoff, err = time.Parse(layout, newCutoff.String())
 		// there is a bug from GetNewListings that is returning
 		// a date equal to the currentCutoff, until its fixes, this
 		// should be a decent hack. Issue is opened on github
