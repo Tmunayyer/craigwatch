@@ -111,18 +111,18 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		fmt.Println("saving ", len(result.Listings), " new listings...")
 		pc.db.saveListingMulti(search.ID, listingsToSave)
 
-		newCutoff = time.Unix(maxUnixDate, 0)
+		newCutoff = time.Unix(maxUnixDate, 0).UTC()
 		layout := "2006-01-02 15:04"
-		newCutoff, err = time.Parse(layout, newCutoff.String())
+		newCutoff, err = time.Parse(layout, newCutoff.String()[:16])
+		if err != nil {
+			fmt.Println("err parsing cutoff time", err)
+		}
+
 		// there is a bug from GetNewListings that is returning
 		// a date equal to the currentCutoff, until its fixes, this
 		// should be a decent hack. Issue is opened on github
 		newCutoff = newCutoff.Add(1 * time.Second)
-		if err != nil {
-			fmt.Println("err parsing cutoff time", err)
-		}
 	}
-
 	record.polledAsOf = newCutoff
 
 	pc.mu.Unlock()
