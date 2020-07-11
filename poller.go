@@ -17,7 +17,9 @@ type pollingService interface {
 }
 
 type pollingRecord struct {
-	polledAsOf time.Time
+	polledAsOf            time.Time
+	pollingInterval       int // seconds, default 60
+	newListingsSinceStart int
 }
 
 type pollingClient struct {
@@ -71,7 +73,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		record.polledAsOf = time.Unix(int64(search.UnixCutoffDate), 0)
 	}
 
-	fmt.Println("polling:", search.URL)
+	fmt.Println("polling:", search.URL) // intentional
 	result, err := pc.cl.GetNewListings(ctx, search.URL, record.polledAsOf)
 	if err != nil {
 		fmt.Println("err getting listings from fn poll():", err)
@@ -80,35 +82,9 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	// new cutoff date
 	newCutoff := record.polledAsOf
 	if len(result.Listings) > 0 {
-		listingsToSave := []clListing{}
-		var maxUnixDate int64
+		listingsToSave, maxUnixDate := pc.processNewListings(result)
 
-		for _, l := range result.Listings {
-			var price int = 0
-			if len(l.Price) > 0 {
-				price, err = strconv.Atoi(l.Price[1:])
-				if err != nil {
-					fmt.Println("err converting from fn poll():", err)
-				}
-			}
-
-			unixDate := newUnixDate(l.Date)
-			if unixDate > maxUnixDate {
-				maxUnixDate = unixDate
-			}
-
-			listingsToSave = append(listingsToSave, clListing{
-				DataPID:      l.DataPID,
-				DataRepostOf: l.DataRepostOf,
-				UnixDate:     unixDate,
-				Title:        l.Title,
-				Link:         l.Link,
-				Price:        price,
-				Hood:         l.Hood,
-			})
-		}
-
-		fmt.Println("saving ", len(result.Listings), " new listings...")
+		fmt.Println("saving ", len(result.Listings), " new listings...") // intentional
 		pc.db.saveListingMulti(search.ID, listingsToSave)
 
 		newCutoff = time.Unix(maxUnixDate, 0).UTC()
@@ -127,4 +103,37 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 
 	pc.mu.Unlock()
 	time.AfterFunc(time.Duration(60*time.Second), func() { pc.poll(ctx, search) })
+}
+
+func (pc *pollingClient) processNewListings(data *craigslist.Result) ([]clListing, int64) {
+	listingsToSave := []clListing{}
+	var maxUnixDate int64
+
+	for _, l := range data.Listings {
+		var price int = 0
+		if len(l.Price) > 0 {
+			num, err := strconv.Atoi(l.Price[1:])
+			if err != nil {
+				fmt.Println("err converting from fn poll():", err)
+			}
+			price = num
+		}
+
+		unixDate := newUnixDate(l.Date)
+		if unixDate > maxUnixDate {
+			maxUnixDate = unixDate
+		}
+
+		listingsToSave = append(listingsToSave, clListing{
+			DataPID:      l.DataPID,
+			DataRepostOf: l.DataRepostOf,
+			UnixDate:     unixDate,
+			Title:        l.Title,
+			Link:         l.Link,
+			Price:        price,
+			Hood:         l.Hood,
+		})
+	}
+
+	return listingsToSave, maxUnixDate
 }
