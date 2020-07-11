@@ -171,6 +171,10 @@ func (m *mockDBClient) getListingMultiAfter(id int, date int64) ([]clListing, er
 	return output, nil
 }
 
+func (m *mockDBClient) getSearchActivity(searchID int) (searchActivity, error) {
+	return searchActivity{}, nil
+}
+
 type mockPollingService struct {
 	listings []craigslist.Listing
 }
@@ -345,9 +349,7 @@ func TestHandleSearch(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, "URLs must be unique\n", string(message))
-
 	})
-
 }
 
 // NOTE: before debugging here, make sure destination field are public

@@ -16,7 +16,7 @@ func newDate(date string) time.Time {
 
 func newUnixDate(date string) int64 {
 	layout := "2006-01-02 15:04"
-	formattedDate, err := time.Parse(layout, date)
+	formattedDate, err := time.Parse(layout, date[:16])
 	if err != nil {
 		panic(err)
 	}
