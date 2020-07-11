@@ -100,6 +100,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 				Hood:         l.Hood,
 			})
 		}
+		fmt.Println("saving ", len(result.Listings), " new listings...")
 		pc.db.saveListingMulti(search.ID, listingsToSave)
 
 		layout := "2006-01-02 15:04"

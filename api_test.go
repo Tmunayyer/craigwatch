@@ -349,9 +349,7 @@ func TestHandleSearch(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, "URLs must be unique\n", string(message))
-
 	})
-
 }
 
 // NOTE: before debugging here, make sure destination field are public
