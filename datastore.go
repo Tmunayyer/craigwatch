@@ -301,7 +301,6 @@ func (c *client) saveListingMulti(searchID int, listings []clListing) error {
 
 	stmt, err := txn.Prepare(pq.CopyIn("listing", "search_id", "data_pid", "data_repost_of", "unix_date", "title", "link", "price", "hood"))
 	if err != nil {
-		fmt.Println("from the formatting", err)
 		return err
 	}
 
@@ -309,7 +308,6 @@ func (c *client) saveListingMulti(searchID int, listings []clListing) error {
 		_, err = stmt.Exec(searchID, l.DataPID, l.DataRepostOf, l.UnixDate, l.Title, l.Link, l.Price, l.Hood)
 
 		if err != nil {
-			fmt.Println("from the executing")
 			return err
 		}
 	}
