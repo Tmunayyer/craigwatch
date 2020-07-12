@@ -10,11 +10,6 @@ import (
 	craigslist "github.com/tmunayyer/go-craigslist"
 )
 
-const (
-	defaultPollingInterval       = 60 // seconds
-	maxPollingIntervalMultiplier = 10
-)
-
 type pollingService interface {
 	initiate(context.Context) error
 	shutdown() error
@@ -32,6 +27,9 @@ type pollingClient struct {
 	db      connection
 	mu      sync.Mutex // guard records
 	records map[int]*pollingRecord
+
+	defaultPollingInterval       int
+	maxPollingIntervalMultiplier int
 }
 
 func newPollingService(cl craigslist.API, db connection) pollingService {
@@ -39,6 +37,9 @@ func newPollingService(cl craigslist.API, db connection) pollingService {
 		cl:      cl,
 		db:      db,
 		records: make(map[int]*pollingRecord),
+
+		defaultPollingInterval:       60, // seconds
+		maxPollingIntervalMultiplier: 10,
 	}
 
 	err := pc.initiate(context.TODO())
@@ -76,8 +77,9 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		pc.records[search.ID] = record
 
 		record.polledAsOf = time.Unix(int64(search.UnixCutoffDate), 0)
-		record.pollingInterval = defaultPollingInterval
-		record.emptyPollCount = 1
+		record.pollingInterval = pc.defaultPollingInterval
+		// set it to 0, if there are listings, its set to 1, if there are none 1 gets added
+		record.emptyPollCount = 0
 	}
 
 	fmt.Println("polling:", search.URL) // intentional
@@ -104,14 +106,14 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		}
 
 		// dont poll any faster than one a min
-		if activity.InSeconds > defaultPollingInterval {
+		if activity.InSeconds > pc.defaultPollingInterval {
 			record.pollingInterval = activity.InSeconds
 		} else {
-			record.pollingInterval = defaultPollingInterval
+			record.pollingInterval = pc.defaultPollingInterval
 		}
 		record.emptyPollCount = 1
 	} else {
-		if record.emptyPollCount < 10 {
+		if record.emptyPollCount < pc.maxPollingIntervalMultiplier {
 			record.emptyPollCount++
 		}
 	}

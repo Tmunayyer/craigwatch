@@ -61,10 +61,6 @@ func (m *mockCraigslistClient) FormatURL(term string, o craigslist.Options) stri
 }
 
 func (m *mockCraigslistClient) GetListings(ctx context.Context, url string) (*craigslist.Result, error) {
-	return m.getNewListingsFn(ctx, url)
-}
-
-func (m *mockCraigslistClient) GetNewListings(ctx context.Context, url string, date time.Time) (*craigslist.Result, error) {
 	if url == badCraigslistURL {
 		return &craigslist.Result{}, fmt.Errorf("invalid url: %v", url)
 	}
@@ -74,6 +70,11 @@ func (m *mockCraigslistClient) GetNewListings(ctx context.Context, url string, d
 	}
 
 	return &fakeResult, nil
+
+}
+
+func (m *mockCraigslistClient) GetNewListings(ctx context.Context, url string, date time.Time) (*craigslist.Result, error) {
+	return m.getNewListingsFn(ctx, url)
 }
 
 type mockDBClient struct {
@@ -165,7 +166,10 @@ func (m *mockDBClient) getListingMultiAfter(id int, date int64) ([]clListing, er
 }
 
 func (m *mockDBClient) getSearchActivity(searchID int) (searchActivity, error) {
-	return searchActivity{}, nil
+	// fake listing data should have average in seconds of 90 min * 60 seconds = 5400
+	return searchActivity{
+		InSeconds: 5400,
+	}, nil
 }
 
 type mockPollingService struct {
