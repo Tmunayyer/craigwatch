@@ -52,7 +52,8 @@ var fakeSearch = clSearch{
 }
 
 type mockCraigslistClient struct {
-	location string
+	location         string
+	getNewListingsFn func(ctx context.Context, url string) (*craigslist.Result, error)
 }
 
 func (m *mockCraigslistClient) FormatURL(term string, o craigslist.Options) string {
@@ -60,15 +61,7 @@ func (m *mockCraigslistClient) FormatURL(term string, o craigslist.Options) stri
 }
 
 func (m *mockCraigslistClient) GetListings(ctx context.Context, url string) (*craigslist.Result, error) {
-	if url == badCraigslistURL {
-		return &craigslist.Result{}, fmt.Errorf("invalid url: %v", url)
-	}
-
-	fakeResult := craigslist.Result{
-		Listings: fakeListings,
-	}
-
-	return &fakeResult, nil
+	return m.getNewListingsFn(ctx, url)
 }
 
 func (m *mockCraigslistClient) GetNewListings(ctx context.Context, url string, date time.Time) (*craigslist.Result, error) {
@@ -196,6 +189,17 @@ func setupTestAPI(t *testing.T) *apiService {
 	t.Helper()
 	mockCL := mockCraigslistClient{
 		location: "newyork",
+		getNewListingsFn: func(ctx context.Context, url string) (*craigslist.Result, error) {
+			if url == badCraigslistURL {
+				return &craigslist.Result{}, fmt.Errorf("invalid url: %v", url)
+			}
+
+			fakeResult := craigslist.Result{
+				Listings: fakeListings,
+			}
+
+			return &fakeResult, nil
+		},
 	}
 	mockDB := mockDBClient{}
 	mockPS := mockPollingService{}

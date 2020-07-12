@@ -10,6 +10,11 @@ import (
 	craigslist "github.com/tmunayyer/go-craigslist"
 )
 
+const (
+	defaultPollingInterval       = 60 // seconds
+	maxPollingIntervalMultiplier = 10
+)
+
 type pollingService interface {
 	initiate(context.Context) error
 	shutdown() error
@@ -71,6 +76,8 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		pc.records[search.ID] = record
 
 		record.polledAsOf = time.Unix(int64(search.UnixCutoffDate), 0)
+		record.pollingInterval = defaultPollingInterval
+		record.emptyPollCount = 1
 	}
 
 	fmt.Println("polling:", search.URL) // intentional
@@ -96,7 +103,12 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 			fmt.Println("err getting search activity in fn poll():", err)
 		}
 
-		record.pollingInterval = activity.InSeconds
+		// dont poll any faster than one a min
+		if activity.InSeconds > defaultPollingInterval {
+			record.pollingInterval = activity.InSeconds
+		} else {
+			record.pollingInterval = defaultPollingInterval
+		}
 		record.emptyPollCount = 1
 	} else {
 		if record.emptyPollCount < 10 {
