@@ -17,7 +17,9 @@ type pollingService interface {
 }
 
 type pollingRecord struct {
-	polledAsOf time.Time
+	polledAsOf      time.Time
+	pollingInterval int // seconds, default 60
+	emptyPollCount  int // count the time a poll comes back as nothing new to use as input to interval adjustments
 }
 
 type pollingClient struct {
@@ -25,6 +27,9 @@ type pollingClient struct {
 	db      connection
 	mu      sync.Mutex // guard records
 	records map[int]*pollingRecord
+
+	defaultPollingInterval       int
+	maxPollingIntervalMultiplier int
 }
 
 func newPollingService(cl craigslist.API, db connection) pollingService {
@@ -32,6 +37,9 @@ func newPollingService(cl craigslist.API, db connection) pollingService {
 		cl:      cl,
 		db:      db,
 		records: make(map[int]*pollingRecord),
+
+		defaultPollingInterval:       60, // seconds
+		maxPollingIntervalMultiplier: 10,
 	}
 
 	err := pc.initiate(context.TODO())
@@ -69,9 +77,12 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		pc.records[search.ID] = record
 
 		record.polledAsOf = time.Unix(int64(search.UnixCutoffDate), 0)
+		record.pollingInterval = pc.defaultPollingInterval
+		// set it to 0, if there are listings, its set to 1, if there are none 1 gets added
+		record.emptyPollCount = 0
 	}
 
-	fmt.Println("polling:", search.URL)
+	fmt.Println("polling:", search.ID, search.URL) // intentional
 	result, err := pc.cl.GetNewListings(ctx, search.URL, record.polledAsOf)
 	if err != nil {
 		fmt.Println("err getting listings from fn poll():", err)
@@ -79,52 +90,85 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 
 	// new cutoff date
 	newCutoff := record.polledAsOf
+	// polling interaval
 	if len(result.Listings) > 0 {
-		listingsToSave := []clListing{}
-		var maxUnixDate int64
+		listingsToSave, maxUnixDate := pc.processNewListings(result)
 
-		for _, l := range result.Listings {
-			var price int = 0
-			if len(l.Price) > 0 {
-				price, err = strconv.Atoi(l.Price[1:])
-				if err != nil {
-					fmt.Println("err converting from fn poll():", err)
-				}
-			}
-
-			unixDate := newUnixDate(l.Date)
-			if unixDate > maxUnixDate {
-				maxUnixDate = unixDate
-			}
-
-			listingsToSave = append(listingsToSave, clListing{
-				DataPID:      l.DataPID,
-				DataRepostOf: l.DataRepostOf,
-				UnixDate:     unixDate,
-				Title:        l.Title,
-				Link:         l.Link,
-				Price:        price,
-				Hood:         l.Hood,
-			})
-		}
-
-		fmt.Println("saving ", len(result.Listings), " new listings...")
+		fmt.Println("-- id", search.ID, "saving ", len(result.Listings), " new listings...") // intentional
 		pc.db.saveListingMulti(search.ID, listingsToSave)
 
-		newCutoff = time.Unix(maxUnixDate, 0).UTC()
-		layout := "2006-01-02 15:04"
-		newCutoff, err = time.Parse(layout, newCutoff.String()[:16])
+		newCutoff = pc.calculateCutoff(maxUnixDate)
+
+		// calculate polling interval
+		activity, err := pc.db.getSearchActivity(search.ID)
 		if err != nil {
-			fmt.Println("err parsing cutoff time", err)
+			fmt.Println("err getting search activity in fn poll():", err)
 		}
 
-		// there is a bug from GetNewListings that is returning
-		// a date equal to the currentCutoff, until its fixes, this
-		// should be a decent hack. Issue is opened on github
-		newCutoff = newCutoff.Add(1 * time.Second)
+		// dont poll any faster than one a min
+		if activity.InSeconds > pc.defaultPollingInterval {
+			record.pollingInterval = activity.InSeconds
+		} else {
+			record.pollingInterval = pc.defaultPollingInterval
+		}
+		record.emptyPollCount = 1
+	} else {
+		if record.emptyPollCount < pc.maxPollingIntervalMultiplier {
+			record.emptyPollCount++
+		}
 	}
 	record.polledAsOf = newCutoff
 
 	pc.mu.Unlock()
-	time.AfterFunc(time.Duration(60*time.Second), func() { pc.poll(ctx, search) })
+	interval := time.Duration(record.pollingInterval*record.emptyPollCount) * time.Second
+	fmt.Println("-- id", search.ID, "polling again in", interval, "seconds")
+	time.AfterFunc(interval, func() { pc.poll(ctx, search) })
+}
+
+func (pc *pollingClient) processNewListings(data *craigslist.Result) ([]clListing, int64) {
+	listingsToSave := []clListing{}
+	var maxUnixDate int64
+
+	for _, l := range data.Listings {
+		var price int = 0
+		if len(l.Price) > 0 {
+			num, err := strconv.Atoi(l.Price[1:])
+			if err != nil {
+				fmt.Println("err converting from fn poll():", err)
+			}
+			price = num
+		}
+
+		unixDate := newUnixDate(l.Date)
+		if unixDate > maxUnixDate {
+			maxUnixDate = unixDate
+		}
+
+		listingsToSave = append(listingsToSave, clListing{
+			DataPID:      l.DataPID,
+			DataRepostOf: l.DataRepostOf,
+			UnixDate:     unixDate,
+			Title:        l.Title,
+			Link:         l.Link,
+			Price:        price,
+			Hood:         l.Hood,
+		})
+	}
+
+	return listingsToSave, maxUnixDate
+}
+
+func (pc *pollingClient) calculateCutoff(maxUnixDate int64) time.Time {
+	newCutoff := time.Unix(maxUnixDate, 0).UTC()
+	layout := "2006-01-02 15:04"
+	newCutoff, err := time.Parse(layout, newCutoff.String()[:16])
+	if err != nil {
+		fmt.Println("err parsing cutoff time", err)
+	}
+
+	// there is a bug from GetNewListings that is returning
+	// a date equal to the currentCutoff, until its fixes, this
+	// should be a decent hack. Issue is opened on github
+	newCutoff = newCutoff.Add(1 * time.Second)
+	return newCutoff
 }
