@@ -17,9 +17,9 @@ type pollingService interface {
 }
 
 type pollingRecord struct {
-	polledAsOf            time.Time
-	pollingInterval       int // seconds, default 60
-	newListingsSinceStart int
+	polledAsOf      time.Time
+	pollingInterval int // seconds, default 60
+	emptyPollCount  int // count the time a poll comes back as nothing new to use as input to interval adjustments
 }
 
 type pollingClient struct {
@@ -81,6 +81,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 
 	// new cutoff date
 	newCutoff := record.polledAsOf
+	// polling interaval
 	if len(result.Listings) > 0 {
 		listingsToSave, maxUnixDate := pc.processNewListings(result)
 
@@ -88,11 +89,25 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		pc.db.saveListingMulti(search.ID, listingsToSave)
 
 		newCutoff = pc.calculateCutoff(maxUnixDate)
+
+		// calculate polling interval
+		activity, err := pc.db.getSearchActivity(search.ID)
+		if err != nil {
+			fmt.Println("err getting search activity in fn poll():", err)
+		}
+
+		record.pollingInterval = activity.InSeconds
+		record.emptyPollCount = 1
+	} else {
+		if record.emptyPollCount < 10 {
+			record.emptyPollCount++
+		}
 	}
 	record.polledAsOf = newCutoff
 
 	pc.mu.Unlock()
-	time.AfterFunc(time.Duration(60*time.Second), func() { pc.poll(ctx, search) })
+	interval := time.Duration(record.pollingInterval*record.emptyPollCount) * time.Second
+	time.AfterFunc(interval, func() { pc.poll(ctx, search) })
 }
 
 func (pc *pollingClient) processNewListings(data *craigslist.Result) ([]clListing, int64) {
