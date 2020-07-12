@@ -82,7 +82,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		record.emptyPollCount = 0
 	}
 
-	fmt.Println("polling:", search.URL) // intentional
+	fmt.Println("polling:", search.ID, search.URL) // intentional
 	result, err := pc.cl.GetNewListings(ctx, search.URL, record.polledAsOf)
 	if err != nil {
 		fmt.Println("err getting listings from fn poll():", err)
@@ -94,7 +94,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	if len(result.Listings) > 0 {
 		listingsToSave, maxUnixDate := pc.processNewListings(result)
 
-		fmt.Println("saving ", len(result.Listings), " new listings...") // intentional
+		fmt.Println("-- id", search.ID, "saving ", len(result.Listings), " new listings...") // intentional
 		pc.db.saveListingMulti(search.ID, listingsToSave)
 
 		newCutoff = pc.calculateCutoff(maxUnixDate)
@@ -121,6 +121,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 
 	pc.mu.Unlock()
 	interval := time.Duration(record.pollingInterval*record.emptyPollCount) * time.Second
+	fmt.Println("-- id", search.ID, "polling again in", interval, "seconds")
 	time.AfterFunc(interval, func() { pc.poll(ctx, search) })
 }
 
