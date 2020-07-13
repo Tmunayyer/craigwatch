@@ -1,4 +1,10 @@
 <style module>
+#search-list {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 625px;
+}
+
 .search-listitem {
   box-shadow: 0 0px 2px 0 rgba(0, 0, 0, 0.3);
   transition: 0.3s;
@@ -6,19 +12,64 @@
   border-radius: 4px;
 }
 
-/* On mouse-over, add a deeper shadow */
 .search-listitem:hover {
   box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.6);
   cursor: pointer;
 }
+
+.listitem-header {
+  box-sizing: border-box;
+  padding: 0.2em 0.2em 0.2em 0.2em;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-content: center;
+  overflow: hidden;
+}
+
+.header-name {
+  padding: 0.2em 0.2em 0.2em 0.2em;
+  min-width: min-content;
+  font-weight: bold;
+  font-size: 1.2em;
+  align-self: center;
+}
+
+.header-date {
+  padding: 0.2em 0.2em 0.2em 0.2em;
+  font-size: 0.8em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  overflow: hidden;
+  white-space: nowrap;
+
+  min-width: fit-content;
+}
+
+.listitem-body {
+  padding: 0.2em 0.2em 0.2em 0.2em;
+  overflow: hidden;
+  white-space: nowrap;
+}
 </style>
 
 <template>
-  <ul id="searchList">
+  <ul id="search-list">
     <li v-for="search in searchList" :key="search.ID" v-on:click="redirector(search)">
       <div class="search-listitem">
-        <div>Name: {{ search.Name }}</div>
-        <div>Created On: {{search.CreatedOn}}</div>
+        <div class="listitem-header">
+          <div class="header-name">{{ search.Name }}</div>
+          <div class="header-date">
+            <div>Monitored Since</div>
+            <div>{{ formatDate(search.CreatedOn) }}</div>
+          </div>
+        </div>
+        <hr />
+        <div class="listitem-body">
+          <div>URL: {{search.URL}}</div>
+        </div>
       </div>
     </li>
   </ul>
@@ -46,6 +97,17 @@ export default {
       const body = await response.json();
 
       return body;
+    },
+    formatDate: function(date) {
+      var options = {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      };
+      var today = new Date(date);
+
+      return today.toLocaleDateString("en-US");
     }
   }
 };

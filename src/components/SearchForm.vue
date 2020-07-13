@@ -1,9 +1,12 @@
 <style module>
 .search-form {
+  box-sizing: border-box;
+  max-width: 250px;
+
   display: flex;
   flex-direction: column;
 
-  margin: 5px 5px 5px 5px;
+  /* margin: 5px 5px 5px 5px; */
 }
 
 .search-field {

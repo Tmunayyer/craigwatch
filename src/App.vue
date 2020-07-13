@@ -11,6 +11,8 @@
 }
 
 #content {
+  box-sizing: border-box;
+
   height: inherit;
   width: inherit;
 
@@ -19,8 +21,7 @@
   flex-grow: 1;
   align-content: left;
 
-  margin-top: 1em;
-  margin-left: 1.5em;
+  padding: 1em 1.5em 1em 1.5em;
 }
 </style>
 

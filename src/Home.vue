@@ -1,5 +1,12 @@
+<style module>
+.page-container {
+  box-sizing: border-box;
+  width: 100%;
+}
+</style>
+
 <template>
-  <div>
+  <div class="page-container">
     <SearchForm />
     <br />
     <SearchList />
