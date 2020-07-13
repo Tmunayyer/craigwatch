@@ -1,6 +1,7 @@
 <template>
   <div>
     <SearchForm />
+    <br />
     <SearchList />
   </div>
 </template>
