@@ -6,8 +6,19 @@
   margin: 5px 5px 5px 5px;
 }
 
-.label {
+.search-field {
+  margin-bottom: 0.5em;
+}
+
+.search-label {
+  width: 100%;
   font-weight: 600;
+}
+
+.search-input {
+  box-sizing: border-box;
+  width: 100%;
+  /* padding: 0.3em; */
 }
 
 .submit-button {
@@ -18,12 +29,16 @@
 
 <template>
   <div class="search-form">
-    <div class="label">search name:</div>
-    <input v-model="name" type="text" />
-    <br />
-    <div class="label">craigslist search url:</div>
-    <input v-model="url" type="text" />
-    <br />
+    <div class="search-field">
+      <div class="search-label">search name:</div>
+      <input class="search-input" v-model="name" type="text" />
+    </div>
+
+    <div class="search-field">
+      <div class="search-label">craigslist search url:</div>
+      <input class="search-input" v-model="url" type="text" />
+    </div>
+
     <button class="submit-button" v-on:click="handleSubmit">monitor listings</button>
   </div>
 </template>
