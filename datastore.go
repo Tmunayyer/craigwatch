@@ -21,12 +21,15 @@ type connection interface {
 
 	saveSearch(clSearch) (clSearch, error)
 	deleteSearch(id int) error
+	getSearch(searchID int) (clSearch, error)
 	getSearchMulti() ([]clSearch, error)
 
 	saveListingMulti(monitorID int, listings []clListing) error
 	deleteListingMulti(monitorID int) error
 	getListingMulti(id int) ([]clListing, error)
 	getListingMultiAfter(id int, unixDate int64) ([]clListing, error)
+
+	getSearchActivity(searchID int) (searchActivity, error)
 }
 
 type client struct {
@@ -50,6 +53,10 @@ func newDBClient() connection {
 
 	return &c
 }
+
+const (
+	duplicateURLErrorMessage = `pq: duplicate key value violates unique constraint "search_url_key"`
+)
 
 // Connect to the database
 // connect will set up the connection and store the connection string
@@ -119,6 +126,13 @@ type clSearch struct {
 	UnixCutoffDate int
 }
 
+type searchActivity struct {
+	ID        int
+	InSeconds int
+	InMinutes float32
+	InHours   float32
+}
+
 type clListing struct {
 	ID           int
 	SearchID     int
@@ -139,13 +153,57 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 	output := clSearch{}
 
 	rows, err := c.db.Query(`
-		insert into search
-			(name, url, created_on)
-		values
-			($1, $2, Now())
-		returning *
+	insert into search
+		(name, url, created_on)
+	values
+		($1, $2, Now())
+	returning *
 	`, data.Name, data.URL)
+	if err != nil {
+		return output, err
+	}
 	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(
+			&output.ID,
+			&output.Name,
+			&output.URL,
+			&output.CreatedOn,
+		)
+		if err != nil {
+			return output, err
+		}
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
+}
+
+func (c *client) getSearch(searchID int) (clSearch, error) {
+	output := clSearch{}
+
+	rows, err := c.db.Query(`
+		select
+			s.*,
+			coalesce(l.unix_cutoff_date, '0')
+		from
+			search s
+		left join
+			(
+				select
+					search_id,
+					max(unix_date) as "unix_cutoff_date"
+				from listing
+				group by search_id
+			) l
+		on l.search_id = s.id
+		where s.id = $1
+	`, searchID)
 
 	if err != nil {
 		return output, err
@@ -157,6 +215,7 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 			&output.Name,
 			&output.URL,
 			&output.CreatedOn,
+			&output.UnixCutoffDate,
 		)
 		if err != nil {
 			return output, err
@@ -242,7 +301,6 @@ func (c *client) saveListingMulti(searchID int, listings []clListing) error {
 
 	stmt, err := txn.Prepare(pq.CopyIn("listing", "search_id", "data_pid", "data_repost_of", "unix_date", "title", "link", "price", "hood"))
 	if err != nil {
-		fmt.Println("from the formatting")
 		return err
 	}
 
@@ -250,7 +308,6 @@ func (c *client) saveListingMulti(searchID int, listings []clListing) error {
 		_, err = stmt.Exec(searchID, l.DataPID, l.DataRepostOf, l.UnixDate, l.Title, l.Link, l.Price, l.Hood)
 
 		if err != nil {
-			fmt.Println("from the executing")
 			return err
 		}
 	}
@@ -380,6 +437,60 @@ func (c *client) getListingMultiAfter(searchID int, unixDate int64) ([]clListing
 		}
 
 		output = append(output, q)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
+}
+
+func (c *client) getSearchActivity(searchID int) (searchActivity, error) {
+	output := searchActivity{}
+
+	rows, err := c.db.Query(`
+		with order_by_date as (
+			select 
+				l.*
+			from listing l
+			left join search s
+			on l.search_id = s.id
+			where s.id = $1
+			order by unix_date desc
+		),
+		
+		time_between_posts as ( 
+			select
+				ao.search_id,
+				unix_date - lead(unix_date, 1) over (order by unix_date desc) as time_between
+			from order_by_date ao
+		)
+		
+		select
+			tbp.search_id,
+			round(avg(tbp.time_between)) as in_seconds,
+			round(avg(tbp.time_between) / 60, 2) as in_minutes,
+			round(avg(tbp.time_between) / 60 / 60, 2) as in_hours
+		from time_between_posts tbp
+		group by tbp.search_id;
+	`, searchID)
+
+	if err != nil {
+		return output, err
+	}
+
+	for rows.Next() {
+		err := rows.Scan(
+			&output.ID,
+			&output.InSeconds,
+			&output.InMinutes,
+			&output.InHours,
+		)
+		if err != nil {
+			return output, err
+		}
 	}
 
 	err = rows.Err()

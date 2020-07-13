@@ -21,7 +21,7 @@
 
    **Optional:**
  
-   None
+   `ID=[integer]` <br/>
 
 * **Success Response:**
 
@@ -49,3 +49,7 @@
         console.log("the list:", list)
     }
 ```
+
+* **Notes:**
+
+  Passing an ID as a query will provide details about a specific search. Passing no ID will provide a list of all searches details.

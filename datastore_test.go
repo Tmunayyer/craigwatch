@@ -16,7 +16,7 @@ var testListings = []clListing{
 	{
 		DataPID:      "123456",
 		DataRepostOf: "",
-		UnixDate:     newUnixDate("2020-06-01 12:00"),
+		UnixDate:     newUnixDate("2020-01-02 12:00"),
 		Title:        "testListingNumeroUno",
 		Link:         "www.testing.com",
 		Price:        106,
@@ -25,7 +25,7 @@ var testListings = []clListing{
 	{
 		DataPID:      "654321",
 		DataRepostOf: "",
-		UnixDate:     newUnixDate("2020-05-01 12:00"),
+		UnixDate:     newUnixDate("2020-01-01 12:00"),
 		Title:        "testListingNumeroDOS",
 		Link:         "www.testing.com",
 		Price:        999,
@@ -66,6 +66,30 @@ func TestSaveSearch(t *testing.T) {
 
 	// remove the record
 	err = c.deleteSearch(record.ID)
+	assert.NoError(t, err)
+}
+
+func TestGetSearch(t *testing.T) {
+	c, teardown, err := setupDBTestCase(t)
+	assert.NoError(t, err)
+	defer teardown(t)
+
+	args := clSearch{
+		Name: "test getSearch 0100",
+		URL:  "www.TESTING.com",
+	}
+
+	saved, err := c.saveSearch(args)
+	assert.NoError(t, err)
+
+	record, err := c.getSearch(saved.ID)
+	assert.NoError(t, err)
+
+	assert.Equal(t, args.Name, record.Name)
+	assert.Equal(t, args.URL, record.URL)
+
+	// delete the saved records
+	err = c.deleteSearch(saved.ID)
 	assert.NoError(t, err)
 }
 
@@ -186,7 +210,7 @@ func TestGetListingMulti(t *testing.T) {
 		err = c.saveListingMulti(search.ID, testListings)
 		assert.NoError(t, err)
 
-		unixTime := newUnixDate("2020-05-01 12:00")
+		unixTime := newUnixDate("2020-01-01 12:00")
 		fmt.Println("the test unix", unixTime)
 
 		savedListings, err := c.getListingMultiAfter(search.ID, unixTime)
@@ -196,6 +220,32 @@ func TestGetListingMulti(t *testing.T) {
 		assert.Len(t, savedListings, 1)
 		// should be ordered by date
 		assert.Equal(t, savedListings[0].DataPID, testListings[0].DataPID)
+
+		err = c.deleteListingMulti(search.ID)
+		assert.NoError(t, err)
+		err = c.deleteSearch(search.ID)
+		assert.NoError(t, err)
+	})
+}
+
+func TestListingActivity(t *testing.T) {
+	c, teardown, err := setupDBTestCase(t)
+	assert.NoError(t, err)
+	defer teardown(t)
+
+	t.Run("should return metrics", func(t *testing.T) {
+		search, err := c.saveSearch(testSearch)
+		assert.NoError(t, err)
+
+		err = c.saveListingMulti(search.ID, testListings)
+		assert.NoError(t, err)
+
+		activity, err := c.getSearchActivity(search.ID)
+		assert.NoError(t, err)
+
+		fmt.Println()
+
+		assert.Equal(t, float32(24), activity.InHours)
 
 		err = c.deleteListingMulti(search.ID)
 		assert.NoError(t, err)

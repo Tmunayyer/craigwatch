@@ -113,6 +113,31 @@ func (s *apiService) handleSearch(w http.ResponseWriter, req *http.Request) {
 	//== GET ==
 	//=========
 	if req.Method == http.MethodGet {
+		queryValues := req.URL.Query()
+		qValID, has := queryValues["ID"]
+		if has {
+			searchID, err := strconv.Atoi(qValID[0])
+			if err != nil {
+				apiErrorHandler(w, http.StatusBadRequest, "handleSearch", "invalid ID sent", err)
+				return
+			}
+
+			search, err := s.db.getSearch(searchID)
+			if err != nil {
+				apiErrorHandler(w, http.StatusInternalServerError, "handleSearch", "unable to retrieve data", err)
+				return
+			}
+
+			data, err := json.Marshal(search)
+			if err != nil {
+				apiErrorHandler(w, http.StatusInternalServerError, "handleSearch", "unable to marshal data", err)
+				return
+			}
+
+			w.Write(data)
+			return
+		}
+
 		searches, err := s.db.getSearchMulti()
 		if err != nil {
 			apiErrorHandler(w, http.StatusInternalServerError, "handleSearch", "unable to retrieve data", err)
@@ -158,7 +183,11 @@ func (s *apiService) handleSearch(w http.ResponseWriter, req *http.Request) {
 			URL:  body.URL,
 		})
 		if err != nil {
-			apiErrorHandler(w, http.StatusInternalServerError, "handleMonitor", "could not save the information", err)
+			if err.Error() == duplicateURLErrorMessage {
+				apiErrorHandler(w, http.StatusBadRequest, "handleMonitor", "URLs must be unique", err)
+			} else {
+				apiErrorHandler(w, http.StatusInternalServerError, "handleMonitor", "could not save the information", err)
+			}
 			return
 		}
 
@@ -168,6 +197,52 @@ func (s *apiService) handleSearch(w http.ResponseWriter, req *http.Request) {
 		data, err := json.Marshal(record)
 		if err != nil {
 			apiErrorHandler(w, http.StatusInternalServerError, "handleMonitor", "problems formatting the data", err)
+			return
+		}
+
+		w.Write(data)
+		return
+	}
+
+	//=================
+	//== UNSUPPORTED ==
+	//=================
+	apiErrorHandler(w, http.StatusNotImplemented, "handleSearch", "method not supported: "+req.Method, nil)
+}
+
+func (s *apiService) handleMetric(w http.ResponseWriter, req *http.Request) {
+	//=========
+	//== GET ==
+	//=========
+	if req.Method == http.MethodGet {
+		queryValues := req.URL.Query()
+		qValID, has := queryValues["ID"]
+		if !has {
+			apiErrorHandler(w, http.StatusBadRequest, "handleSearch", "invalid ID sent", nil)
+			return
+		}
+
+		searchID, err := strconv.Atoi(qValID[0])
+		if err != nil {
+			apiErrorHandler(w, http.StatusBadRequest, "handleSearch", "invalid ID sent", err)
+			return
+		}
+
+		search, err := s.db.getSearch(searchID)
+		if err != nil {
+			apiErrorHandler(w, http.StatusInternalServerError, "handleSearch", "no search with that ID found", err)
+			return
+		}
+
+		activity, err := s.db.getSearchActivity(search.ID)
+		if err != nil {
+			apiErrorHandler(w, http.StatusInternalServerError, "handleSearch", "unable to calculate activity", err)
+			return
+		}
+
+		data, err := json.Marshal(activity)
+		if err != nil {
+			apiErrorHandler(w, http.StatusInternalServerError, "handleSearch", "unable to marshal data", err)
 			return
 		}
 

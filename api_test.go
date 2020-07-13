@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -51,7 +52,8 @@ var fakeSearch = clSearch{
 }
 
 type mockCraigslistClient struct {
-	location string
+	location         string
+	getNewListingsFn func(ctx context.Context, url string) (*craigslist.Result, error)
 }
 
 func (m *mockCraigslistClient) FormatURL(term string, o craigslist.Options) string {
@@ -68,21 +70,16 @@ func (m *mockCraigslistClient) GetListings(ctx context.Context, url string) (*cr
 	}
 
 	return &fakeResult, nil
+
 }
 
 func (m *mockCraigslistClient) GetNewListings(ctx context.Context, url string, date time.Time) (*craigslist.Result, error) {
-	if url == badCraigslistURL {
-		return &craigslist.Result{}, fmt.Errorf("invalid url: %v", url)
-	}
-
-	fakeResult := craigslist.Result{
-		Listings: fakeListings,
-	}
-
-	return &fakeResult, nil
+	return m.getNewListingsFn(ctx, url)
 }
 
 type mockDBClient struct {
+	saveSearchCallCount    int
+	saveSearchURLs         map[string]clSearch
 	saveListingsCallCount  int
 	saveListingsCalledWith []clListing
 }
@@ -100,7 +97,28 @@ func (m *mockDBClient) applySchema() error {
 	return nil
 }
 func (m *mockDBClient) saveSearch(data clSearch) (clSearch, error) {
-	return clSearch{ID: 1, Name: data.Name, URL: data.URL, Confirmed: false}, nil
+	if m.saveSearchURLs == nil {
+		m.saveSearchURLs = make(map[string]clSearch)
+	}
+
+	_, has := m.saveSearchURLs[data.URL]
+	if has {
+		return data, errors.New(duplicateURLErrorMessage)
+	}
+
+	newRecord := clSearch{ID: 1, Name: data.Name, URL: data.URL, Confirmed: false}
+	m.saveSearchURLs[data.URL] = newRecord
+	return newRecord, nil
+}
+func (m *mockDBClient) getSearch(searchID int) (clSearch, error) {
+	if searchID == 99 {
+		return clSearch{
+			ID:   1,
+			Name: "Test seach 1",
+			URL:  "www.testing.com",
+		}, nil
+	}
+	return clSearch{}, nil
 }
 func (m *mockDBClient) getSearchMulti() ([]clSearch, error) {
 	return []clSearch{
@@ -147,6 +165,13 @@ func (m *mockDBClient) getListingMultiAfter(id int, date int64) ([]clListing, er
 	return output, nil
 }
 
+func (m *mockDBClient) getSearchActivity(searchID int) (searchActivity, error) {
+	// fake listing data should have average in seconds of 90 min * 60 seconds = 5400
+	return searchActivity{
+		InSeconds: 5400,
+	}, nil
+}
+
 type mockPollingService struct {
 	listings []craigslist.Listing
 }
@@ -168,6 +193,17 @@ func setupTestAPI(t *testing.T) *apiService {
 	t.Helper()
 	mockCL := mockCraigslistClient{
 		location: "newyork",
+		getNewListingsFn: func(ctx context.Context, url string) (*craigslist.Result, error) {
+			if url == badCraigslistURL {
+				return &craigslist.Result{}, fmt.Errorf("invalid url: %v", url)
+			}
+
+			fakeResult := craigslist.Result{
+				Listings: fakeListings,
+			}
+
+			return &fakeResult, nil
+		},
 	}
 	mockDB := mockDBClient{}
 	mockPS := mockPollingService{}
@@ -203,9 +239,21 @@ func TestHandleListing(t *testing.T) {
 
 func TestHandleSearch(t *testing.T) {
 	api := setupTestAPI(t)
-	t.Run("get - gets a list of searches", func(t *testing.T) {
+	t.Run("get - gets a single search record", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/api/v1/search?ID=99", nil)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
 
-		req, err := http.NewRequest(http.MethodGet, "/listing?ID=99", nil)
+		api.handleSearch(res, req)
+
+		resBody := clSearch{}
+		readBodyInto(t, res.Body, &resBody)
+
+		assert.Equal(t, resBody.Name, "Test seach 1")
+	})
+
+	t.Run("get - gets a list of searches", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/api/v1/search", nil)
 		assert.NoError(t, err)
 		res := httptest.NewRecorder()
 
@@ -215,29 +263,6 @@ func TestHandleSearch(t *testing.T) {
 		readBodyInto(t, res.Body, &resBody)
 
 		assert.Equal(t, 2, len(resBody))
-	})
-
-	t.Run("post - invalid url", func(t *testing.T) {
-		// make a body
-		type body struct {
-			URL string
-		}
-
-		b := body{URL: badCraigslistURL}
-		data, err := json.Marshal(b)
-		assert.NoError(t, err)
-		reader := bytes.NewReader(data)
-
-		req, err := http.NewRequest(http.MethodPost, "/", reader)
-		assert.NoError(t, err)
-		res := httptest.NewRecorder()
-
-		api.handleSearch(res, req)
-
-		message, err := ioutil.ReadAll(res.Body)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-		assert.Equal(t, "url provided is not a compatible with craigslist\n", string(message))
 	})
 
 	t.Run("post - recieves data", func(t *testing.T) {
@@ -270,6 +295,69 @@ func TestHandleSearch(t *testing.T) {
 		assert.Equal(t, false, resBody.Confirmed)
 	})
 
+	t.Run("post - invalid url", func(t *testing.T) {
+		type body struct {
+			Name string
+			URL  string
+		}
+
+		b := body{Name: "badurl", URL: badCraigslistURL}
+		data, err := json.Marshal(b)
+		assert.NoError(t, err)
+		reader := bytes.NewReader(data)
+
+		req, err := http.NewRequest(http.MethodPost, "/", reader)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
+
+		api.handleSearch(res, req)
+
+		message, err := ioutil.ReadAll(res.Body)
+
+		assert.Equal(t, http.StatusBadRequest, res.Code)
+		assert.Equal(t, "url provided is not a compatible with craigslist\n", string(message))
+	})
+
+	t.Run("post - should not accept duplicate urls", func(t *testing.T) {
+		type body struct {
+			Name string
+			URL  string
+		}
+
+		// ROUND 1
+		b := body{Name: "goodurl", URL: "www.goodurl.com"}
+		data, err := json.Marshal(b)
+		assert.NoError(t, err)
+		reader := bytes.NewReader(data)
+
+		req, err := http.NewRequest(http.MethodPost, "/", reader)
+		assert.NoError(t, err)
+		res := httptest.NewRecorder()
+
+		api.handleSearch(res, req)
+
+		resBody := clSearch{}
+		readBodyInto(t, res.Body, &resBody)
+
+		assert.Greater(t, resBody.ID, 0)
+
+		// ROUND 2
+		b = body{Name: "goodurl", URL: "www.goodurl.com"}
+		data, err = json.Marshal(b)
+		assert.NoError(t, err)
+		reader = bytes.NewReader(data)
+
+		req, err = http.NewRequest(http.MethodPost, "/", reader)
+		assert.NoError(t, err)
+		res = httptest.NewRecorder()
+
+		api.handleSearch(res, req)
+
+		message, err := ioutil.ReadAll(res.Body)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "URLs must be unique\n", string(message))
+	})
 }
 
 // NOTE: before debugging here, make sure destination field are public
