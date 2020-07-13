@@ -29,10 +29,7 @@
   <ol class="navbar">
     <img class="nav-logo" src="craigswatchLogo3.png" />
     <li class="nav-item">
-      <router-link class="nav-link" to="/search">search</router-link>
-    </li>
-    <li class="nav-item">
-      <router-link class="nav-link" to="/monitor">monitor</router-link>
+      <router-link class="nav-link" to="/">search</router-link>
     </li>
   </ol>
 </template>

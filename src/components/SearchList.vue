@@ -96,6 +96,8 @@ export default {
       const response = await fetch(apiUrl);
       const body = await response.json();
 
+      console.log("the body:", body);
+
       return body;
     },
     formatDate: function(date) {

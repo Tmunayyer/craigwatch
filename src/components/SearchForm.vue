@@ -5,8 +5,6 @@
 
   display: flex;
   flex-direction: column;
-
-  /* margin: 5px 5px 5px 5px; */
 }
 
 .search-field {
@@ -21,7 +19,6 @@
 .search-input {
   box-sizing: border-box;
   width: 100%;
-  /* padding: 0.3em; */
 }
 
 .submit-button {
