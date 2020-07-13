@@ -7,7 +7,7 @@
 
 <template>
   <div class="page-container">
-    <ResultSummary v-bind:searchDetails="searchDetails" />
+    <ResultSummary v-bind:searchID="searchID" />
     <br />
     <ResultList v-bind:resultList="resultList" />
   </div>
@@ -30,15 +30,11 @@ export default {
       resultList: [],
       newListings: [],
       searchID: this.$route.params.ID,
-      searchDetails: {},
       // UnixTimestamp is the cutoff to use when requesting only new listings, should be 0 on load
       unixDate: 0
     };
   },
   beforeMount: async function() {
-    let initDetails = await this.getSearchDetails();
-    this.searchDetails = initDetails;
-
     let initResultList = await this.getResultList();
 
     if (initResultList.HasNewListings) {
@@ -80,12 +76,6 @@ export default {
       const list = await response.json();
 
       return list;
-    },
-    getSearchDetails: async function() {
-      const response = await fetch(`/api/v1/search?ID=${this.searchID}`);
-      const details = await response.json();
-
-      return details;
     }
   }
 };

@@ -37,6 +37,23 @@
 <script>
 export default {
   name: "ResultSummary",
-  props: ["searchDetails"]
+  props: ["searchID"],
+  data() {
+    return {
+      searchDetails: {}
+    };
+  },
+  beforeMount: async function() {
+    let initDetails = await this.getSearchDetails();
+    this.searchDetails = initDetails;
+  },
+  methods: {
+    getSearchDetails: async function() {
+      const response = await fetch(`/api/v1/search?ID=${this.$props.searchID}`);
+      const details = await response.json();
+
+      return details;
+    }
+  }
 };
 </script>
