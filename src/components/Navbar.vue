@@ -22,6 +22,7 @@
   width: 4em;
   margin-left: 1em;
   margin-right: 1em;
+  padding-left: 1em;
 }
 </style>
 
