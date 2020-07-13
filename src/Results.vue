@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import Listing from "./Listing.vue";
+import Listing from "./components/Listing.vue";
 
 let _RESULT_FETCH_INTERVAL; // to track the interval for cleanup later
 
