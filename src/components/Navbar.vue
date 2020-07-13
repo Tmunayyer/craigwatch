@@ -5,7 +5,8 @@
   display: flex;
   flex-direction: row;
   align-content: flex-start;
-  padding: 5px;
+  padding-top: 5px;
+  padding-bottom: 5px;
   width: 100%;
 }
 

@@ -1,19 +1,23 @@
+<style module>
+.search-form {
+  display: flex;
+  flex-direction: row;
+}
+</style>
+
 <template>
-  <div>
-    <div class="inputs">
-      <h3>search name:</h3>
-      <input v-model="name" type="text" />
-      <br />
-      <h3>craigslist search url:</h3>
-      <input v-model="url" type="text" />
-      <br />
-      <button v-on:click="handleSubmit">find listings</button>
-    </div>
+  <div class="search-form">
+    <h3>search name:</h3>
+    <input v-model="name" type="text" />
+    <br />
+    <h3>craigslist search url:</h3>
+    <input v-model="url" type="text" />
+    <br />
+    <button v-on:click="handleSubmit">find listings</button>
   </div>
 </template>
 
 <script>
-// TODO: Add in some error handling
 export default {
   name: "SearchForm",
   data() {

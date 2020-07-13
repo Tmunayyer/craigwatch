@@ -46,3 +46,17 @@ table {
 	border-collapse: collapse;
 	border-spacing: 0;
 }
+
+/* 
+	Some application setting tacked on to reset.
+*/
+
+html {
+	height:100%;
+	width:100%
+}
+
+body {
+	height:inherit;
+	width:inherit;
+}

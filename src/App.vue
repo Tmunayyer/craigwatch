@@ -1,13 +1,31 @@
 <style module>
 #app {
+  height: inherit;
+  width: inherit;
+
   padding: unset;
+}
+
+#content {
+  height: inherit;
+  width: inherit;
+
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  align-content: left;
+
+  margin-top: 1em;
+  margin-left: 1.5em;
 }
 </style>
 
 <template>
   <div id="app">
     <Navbar />
-    <router-view></router-view>
+    <div id="content">
+      <router-view></router-view>
+    </div>
   </div>
 </template>
 
