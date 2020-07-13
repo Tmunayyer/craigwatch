@@ -13,7 +13,7 @@ func init() {
 }
 
 func main() {
-	fs := http.FileServer(http.Dir("./static"))
+	fs := http.FileServer(http.Dir("./dist"))
 	http.Handle("/", fs)
 
 	initializeAPI()
