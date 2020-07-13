@@ -1,19 +1,30 @@
 <style module>
 .search-form {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+
+  margin: 5px 5px 5px 5px;
+}
+
+.label {
+  font-weight: 600;
+}
+
+.submit-button {
+  width: fit-content;
+  align-self: flex-end;
 }
 </style>
 
 <template>
   <div class="search-form">
-    <h3>search name:</h3>
+    <div class="label">search name:</div>
     <input v-model="name" type="text" />
     <br />
-    <h3>craigslist search url:</h3>
+    <div class="label">craigslist search url:</div>
     <input v-model="url" type="text" />
     <br />
-    <button v-on:click="handleSubmit">find listings</button>
+    <button class="submit-button" v-on:click="handleSubmit">monitor listings</button>
   </div>
 </template>
 

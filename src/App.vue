@@ -4,6 +4,10 @@
   width: inherit;
 
   padding: unset;
+
+  color: rgb(26, 25, 25);
+  font-family: avenir;
+  font-size: 0.95em;
 }
 
 #content {
