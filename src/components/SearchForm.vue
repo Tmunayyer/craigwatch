@@ -7,20 +7,6 @@
   flex-direction: column;
 }
 
-.search-field {
-  margin-bottom: 0.5em;
-}
-
-.search-label {
-  width: 100%;
-  font-weight: 600;
-}
-
-.search-input {
-  box-sizing: border-box;
-  width: 100%;
-}
-
 .submit-button {
   width: fit-content;
   align-self: flex-end;
@@ -29,27 +15,33 @@
 
 <template>
   <div class="search-form">
-    <div class="search-field">
-      <div class="search-label">search name:</div>
-      <input id="name" class="search-input" v-model="name" type="text" />
-    </div>
-
-    <div class="search-field">
-      <div class="search-label">craigslist search url:</div>
-      <input id="url" class="search-input" v-model="url" type="text" />
-    </div>
-
+    <InputWithError v-model="name" :label="'search name:'" :hasErr="nameErr" :errMsg="nameErrMsg" />
+    <InputWithError
+      v-model="url"
+      :label="'craigslist search url:'"
+      :hasErr="urlErr"
+      :errMsg="urlErrMsg"
+    />
     <button class="submit-button" v-on:click="handleSubmit">monitor listings</button>
   </div>
 </template>
 
 <script>
+import InputWithError from "./InputWithError.vue";
+
 export default {
   name: "SearchForm",
+  components: {
+    InputWithError
+  },
   data() {
     return {
       name: "",
-      url: ""
+      nameErr: false,
+      nameErrMsg: "",
+      url: "",
+      urlErr: false,
+      urlErrMsg: ""
     };
   },
   methods: {
@@ -57,6 +49,11 @@ export default {
       this.$router.push(`/result/${search.ID}`);
     },
     handleSubmit: async function() {
+      const isInvalid = this.validation();
+      if (isInvalid) {
+        return;
+      }
+
       const apiUrl = `/api/v1/search`;
       const apiOptions = {
         method: "POST",
@@ -66,6 +63,36 @@ export default {
       const search = await this.$http(apiUrl, apiOptions);
 
       this.redirector(search);
+    },
+    validation: function() {
+      const errorMessage = {
+        nameRequired: "A name is required.",
+        urlRequired: "A url is required.",
+        invalidURL: "Invalid craigslist url provided."
+      };
+
+      let hasError = false;
+
+      if (this.name === "") {
+        hasError = true;
+        this.nameErr = true;
+        this.nameErrMsg = errorMessage.nameRequired;
+      }
+
+      if (this.url === "") {
+        hasError = true;
+        this.urlErr = true;
+        this.urlErrMsg = errorMessage.urlRequired;
+      }
+
+      const urlRegex = new RegExp(/https:\/\/.*\.craigslist.org/);
+      if (!urlRegex.test(this.url)) {
+        hasError = true;
+        this.urlErr = true;
+        this.urlErrMsg = errorMessage.invalidURL;
+      }
+
+      return hasError;
     }
   }
 };
