@@ -31,12 +31,12 @@
   <div class="search-form">
     <div class="search-field">
       <div class="search-label">search name:</div>
-      <input class="search-input" v-model="name" type="text" />
+      <input id="name" class="search-input" v-model="name" type="text" />
     </div>
 
     <div class="search-field">
       <div class="search-label">craigslist search url:</div>
-      <input class="search-input" v-model="url" type="text" />
+      <input id="url" class="search-input" v-model="url" type="text" />
     </div>
 
     <button class="submit-button" v-on:click="handleSubmit">monitor listings</button>
@@ -63,10 +63,9 @@ export default {
         body: JSON.stringify({ Name: this.name, URL: this.url })
       };
 
-      const response = await fetch(apiUrl, apiOptions);
-      const body = await response.json();
+      const search = await this.$http(apiUrl, apiOptions);
 
-      this.redirector(body);
+      this.redirector(search);
     }
   }
 };

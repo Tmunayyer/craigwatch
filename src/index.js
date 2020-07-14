@@ -4,6 +4,8 @@ import App from './App.vue';
 import Home from './Home.vue';
 import Results from './Results.vue';
 
+import api from './api.js';
+
 Vue.use(VueRouter);
 
 Vue.config.productionTip = false;
@@ -14,6 +16,9 @@ const router = new VueRouter({
     { path: '/result/:ID', component: Results }
   ]
 });
+
+// aliasing
+Vue.prototype.$http = api;
 
 new Vue({
   router,
