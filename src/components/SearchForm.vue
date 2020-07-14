@@ -22,6 +22,7 @@
       :hasErr="nameErr"
       :errMsg="nameErrMsg"
     />
+
     <InputWithError
       id="url"
       v-model="url"
@@ -29,17 +30,21 @@
       :hasErr="urlErr"
       :errMsg="urlErrMsg"
     />
+
+    <Tooltip :text="'Paste in a craigslist url.'" />
     <button class="submit-button" v-on:click="handleSubmit">monitor listings</button>
   </div>
 </template>
 
 <script>
 import InputWithError from "./InputWithError.vue";
+import Tooltip from "./Tooltip.vue";
 
 export default {
   name: "SearchForm",
   components: {
-    InputWithError
+    InputWithError,
+    Tooltip
   },
   data() {
     return {
