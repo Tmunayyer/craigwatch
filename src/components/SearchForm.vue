@@ -15,8 +15,15 @@
 
 <template>
   <div class="search-form">
-    <InputWithError v-model="name" :label="'search name:'" :hasErr="nameErr" :errMsg="nameErrMsg" />
     <InputWithError
+      id="name"
+      v-model="name"
+      :label="'search name:'"
+      :hasErr="nameErr"
+      :errMsg="nameErrMsg"
+    />
+    <InputWithError
+      id="url"
       v-model="url"
       :label="'craigslist search url:'"
       :hasErr="urlErr"
