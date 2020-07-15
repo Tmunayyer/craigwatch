@@ -24,6 +24,7 @@
 
 <template>
   <div class="result-header">
+    <Error v-if="error" />
     <div class="result-header-lead">Results For:</div>
     <div class="result-header-name">{{ searchDetails.Name }}</div>
     <a
@@ -35,22 +36,32 @@
 </template>
 
 <script>
+import Error from "./Error.vue";
 export default {
   name: "ResultSummary",
+  components: {
+    Error
+  },
   props: ["searchID"],
   data() {
     return {
-      searchDetails: {}
+      searchDetails: {},
+      error: false
     };
   },
   beforeMount: async function() {
-    let initDetails = await this.getSearchDetails();
-    this.searchDetails = initDetails;
+    try {
+      let initDetails = await this.getSearchDetails();
+      this.searchDetails = initDetails;
+    } catch (err) {
+      this.error = true;
+    }
   },
   methods: {
     getSearchDetails: async function() {
-      const response = await fetch(`/api/v1/search?ID=${this.$props.searchID}`);
-      const details = await response.json();
+      const details = await this.$http(
+        `/api/v1/search?ID=${this.$props.searchID}`
+      );
 
       return details;
     }
