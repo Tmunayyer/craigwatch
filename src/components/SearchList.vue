@@ -1,4 +1,4 @@
-<style module>
+<style scoped>
 #search-list {
   box-sizing: border-box;
   width: 100%;
@@ -10,6 +10,7 @@
   transition: 0.3s;
   padding: 0.5em;
   border-radius: 4px;
+  margin-bottom: 0.5em;
 }
 
 .search-listitem:hover {
@@ -49,14 +50,22 @@
 }
 
 .listitem-body {
+  font-size: 0.9em;
   padding: 0.2em 0.2em 0.2em 0.2em;
   overflow: hidden;
   white-space: nowrap;
+
+  border-top: 1px solid #a7a7a7;
+}
+
+legend {
+  font-size: 0.8em;
 }
 </style>
 
 <template>
   <ul id="search-list">
+    <Error v-if="error" />
     <li v-for="search in searchList" :key="search.ID" v-on:click="redirector(search)">
       <div class="search-listitem">
         <div class="listitem-header">
@@ -66,26 +75,36 @@
             <div>{{ formatDate(search.CreatedOn) }}</div>
           </div>
         </div>
-        <hr />
-        <div class="listitem-body">
+        <fieldset class="listitem-body">
+          <legend>details</legend>
           <div>URL: {{search.URL}}</div>
-        </div>
+        </fieldset>
       </div>
     </li>
   </ul>
 </template>
 
 <script>
+import Error from "./Error.vue";
+
 export default {
   name: "SearchList",
+  components: {
+    Error
+  },
   data() {
     return {
-      searchList: []
+      searchList: [],
+      error: false
     };
   },
   beforeMount: async function() {
-    const searchList = await this.getSearchList();
-    this.searchList = searchList;
+    try {
+      const searchList = await this.getSearchList();
+      this.searchList = searchList;
+    } catch (err) {
+      this.error = true;
+    }
   },
   methods: {
     redirector: function(search) {
@@ -93,8 +112,7 @@ export default {
     },
     getSearchList: async function() {
       const apiUrl = `/api/v1/search`;
-      const response = await fetch(apiUrl);
-      const body = await response.json();
+      const body = await this.$http(apiUrl);
 
       return body;
     },

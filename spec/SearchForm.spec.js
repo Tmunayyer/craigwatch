@@ -1,7 +1,6 @@
 import { mount, shallowMount, createLocalVue } from '@vue/test-utils';
 import VueRouter from "vue-router";
 import SearchForm from '../src/components/SearchForm.vue';
-import App from '@/App.vue';
 import mocker from './mocker.js';
 import { routes } from '../src/router.js';
 
