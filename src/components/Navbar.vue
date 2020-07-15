@@ -1,6 +1,6 @@
 <style module>
 .navbar {
-  background-color: #d5d5d5;
+  background-color: #f3f2f2;
   border-bottom: 1px solid #a7a7a7;
   display: flex;
   flex-direction: row;
