@@ -101,8 +101,7 @@ export default {
     },
     getSearchList: async function() {
       const apiUrl = `/api/v1/search`;
-      const response = await fetch(apiUrl);
-      const body = await response.json();
+      const body = await this.$http(apiUrl);
 
       return body;
     },
