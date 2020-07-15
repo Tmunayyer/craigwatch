@@ -1,4 +1,4 @@
-<style module>
+<style scoped>
 .navbar {
   background-color: #f3f2f2;
   border-bottom: 1px solid #a7a7a7;
@@ -8,6 +8,12 @@
   padding-top: 5px;
   padding-bottom: 5px;
   width: 100%;
+}
+
+ol {
+  flex-direction: row;
+  display: flex;
+  align-items: center;
 }
 
 .nav-item {
@@ -24,19 +30,32 @@
   margin-right: 1em;
   padding-left: 1em;
 }
+
+#spinner-container {
+  height: 100%;
+}
 </style>
 
 <template>
-  <ol class="navbar">
-    <img class="nav-logo" src="craigswatchLogo3.png" />
-    <li class="nav-item">
-      <router-link class="nav-link" to="/">search</router-link>
-    </li>
-  </ol>
+  <div class="navbar">
+    <ol class="links">
+      <img class="nav-logo" src="craigswatchLogo3.png" />
+      <li class="nav-item">
+        <router-link class="nav-link" to="/">search</router-link>
+      </li>
+    </ol>
+
+    <Spinner />
+  </div>
 </template>
 
 <script>
+import Spinner from "./Spinner.vue";
+
 export default {
-  name: "Navbar"
+  name: "Navbar",
+  components: {
+    Spinner
+  }
 };
 </script>

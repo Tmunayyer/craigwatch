@@ -1,8 +1,16 @@
 <style module>
 .result-header {
-  padding: 0.2em 0.2em 0.2em 0.2em;
   margin-bottom: 1em;
   overflow: hidden;
+
+  background-color: #f3f2f2;
+  border: 1px solid #a7a7a7;
+
+  width: 100%;
+  max-width: 375px;
+
+  padding: 1em;
+  border-radius: 4px;
 }
 
 .result-header-lead {
@@ -23,34 +31,45 @@
 </style>
 
 <template>
-  <div class="result-header">
-    <div class="result-header-lead">Results For:</div>
+  <fieldset class="result-header">
+    <legend>results for</legend>
+    <Error v-if="error" />
     <div class="result-header-name">{{ searchDetails.Name }}</div>
     <a
       class="result-header-url"
       v-bind:href="searchDetails.URL"
       target="_blank"
     >{{ searchDetails.URL }}</a>
-  </div>
+  </fieldset>
 </template>
 
 <script>
+import Error from "./Error.vue";
 export default {
   name: "ResultSummary",
+  components: {
+    Error
+  },
   props: ["searchID"],
   data() {
     return {
-      searchDetails: {}
+      searchDetails: {},
+      error: false
     };
   },
   beforeMount: async function() {
-    let initDetails = await this.getSearchDetails();
-    this.searchDetails = initDetails;
+    try {
+      let initDetails = await this.getSearchDetails();
+      this.searchDetails = initDetails;
+    } catch (err) {
+      this.error = true;
+    }
   },
   methods: {
     getSearchDetails: async function() {
-      const response = await fetch(`/api/v1/search?ID=${this.$props.searchID}`);
-      const details = await response.json();
+      const details = await this.$http(
+        `/api/v1/search?ID=${this.$props.searchID}`
+      );
 
       return details;
     }

@@ -54,6 +54,7 @@
 </template>
 
 <script>
+import { spinnerState } from "./Spinner.vue";
 let _RESULT_FETCH_INTERVAL; // to track the interval for cleanup later
 export default {
   name: "ResultList",
