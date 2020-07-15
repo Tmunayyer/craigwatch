@@ -25,6 +25,7 @@
     <div class="search-label">{{ label }}</div>
     <input
       class="search-input"
+      :placeholder="placeholder"
       type="text"
       v-bind:value="value"
       v-on:input="$emit('input', $event.target.value)"
@@ -36,6 +37,6 @@
 <script>
 export default {
   name: "InputWithError",
-  props: ["value", "label", "hasErr", "errMsg"]
+  props: ["value", "label", "placeholder", "hasErr", "errMsg"]
 };
 </script>
