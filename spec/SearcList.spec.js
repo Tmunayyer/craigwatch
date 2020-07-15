@@ -52,5 +52,39 @@ describe("list rendering", () => {
 
         expect(sl.vm.$route.path).toBe(`/result/${fakeSearchList[0].ID}`);
     });
+});
+
+describe("api error state", () => {
+    it("should not display the error", async () => {
+        const sl = mount(SearchList, {
+            mocks: {
+                $http: mocker.api({
+                    shouldFail: false,
+                    data: []
+                })
+            }
+        });
+
+        // wait for async request to finish
+        await sl.vm.$nextTick();
+        expect(sl.vm.$data.error).toBe(false);
+        expect(sl.findComponent({ name: "Error" }).exists()).toBe(false);
+    });
+
+    it("should display the error", async () => {
+        const sl = mount(SearchList, {
+            mocks: {
+                $http: mocker.api({
+                    shouldFail: true,
+                    data: []
+                })
+            }
+        });
+
+        // wait for async request to finish
+        await sl.vm.$nextTick();
+        expect(sl.vm.$data.error).toBe(true);
+        expect(sl.findComponent({ name: "Error" }).exists());
+    });
 
 });

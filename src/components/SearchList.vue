@@ -65,6 +65,7 @@ legend {
 
 <template>
   <ul id="search-list">
+    <Error v-if="error" />
     <li v-for="search in searchList" :key="search.ID" v-on:click="redirector(search)">
       <div class="search-listitem">
         <div class="listitem-header">
@@ -84,16 +85,26 @@ legend {
 </template>
 
 <script>
+import Error from "./Error.vue";
+
 export default {
   name: "SearchList",
+  components: {
+    Error
+  },
   data() {
     return {
-      searchList: []
+      searchList: [],
+      error: false
     };
   },
   beforeMount: async function() {
-    const searchList = await this.getSearchList();
-    this.searchList = searchList;
+    try {
+      const searchList = await this.getSearchList();
+      this.searchList = searchList;
+    } catch (err) {
+      this.error = true;
+    }
   },
   methods: {
     redirector: function(search) {
