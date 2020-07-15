@@ -1,4 +1,4 @@
-<style module>
+<style scoped>
 #search-list {
   box-sizing: border-box;
   width: 100%;
@@ -10,6 +10,7 @@
   transition: 0.3s;
   padding: 0.5em;
   border-radius: 4px;
+  margin-bottom: 0.5em;
 }
 
 .search-listitem:hover {
@@ -49,9 +50,16 @@
 }
 
 .listitem-body {
+  font-size: 0.9em;
   padding: 0.2em 0.2em 0.2em 0.2em;
   overflow: hidden;
   white-space: nowrap;
+
+  border-top: 1px solid #a7a7a7;
+}
+
+legend {
+  font-size: 0.8em;
 }
 </style>
 
@@ -66,10 +74,10 @@
             <div>{{ formatDate(search.CreatedOn) }}</div>
           </div>
         </div>
-        <hr />
-        <div class="listitem-body">
+        <fieldset class="listitem-body">
+          <legend>details</legend>
           <div>URL: {{search.URL}}</div>
-        </div>
+        </fieldset>
       </div>
     </li>
   </ul>
