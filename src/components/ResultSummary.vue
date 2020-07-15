@@ -1,8 +1,16 @@
 <style module>
 .result-header {
-  padding: 0.2em 0.2em 0.2em 0.2em;
   margin-bottom: 1em;
   overflow: hidden;
+
+  background-color: #f3f2f2;
+  border: 1px solid #a7a7a7;
+
+  width: 100%;
+  max-width: 375px;
+
+  padding: 1em;
+  border-radius: 4px;
 }
 
 .result-header-lead {
@@ -23,16 +31,16 @@
 </style>
 
 <template>
-  <div class="result-header">
+  <fieldset class="result-header">
+    <legend>results for</legend>
     <Error v-if="error" />
-    <div class="result-header-lead">Results For:</div>
     <div class="result-header-name">{{ searchDetails.Name }}</div>
     <a
       class="result-header-url"
       v-bind:href="searchDetails.URL"
       target="_blank"
     >{{ searchDetails.URL }}</a>
-  </div>
+  </fieldset>
 </template>
 
 <script>
