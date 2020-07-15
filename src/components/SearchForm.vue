@@ -1,20 +1,33 @@
 <style module>
 .search-form {
+  background-color: #f3f2f2;
+  border: 1px solid #a7a7a7;
+
   box-sizing: border-box;
-  max-width: 250px;
+  width: 100%;
+  max-width: 375px;
 
   display: flex;
   flex-direction: column;
+
+  padding: 1em;
+  border-radius: 4px;
+}
+
+legend {
+  padding: 0.2em;
 }
 
 .submit-button {
-  width: fit-content;
-  align-self: flex-end;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>
 
 <template>
-  <div class="search-form">
+  <fieldset class="search-form">
+    <legend>new search</legend>
     <InputWithError
       id="name"
       v-model="name"
@@ -32,9 +45,10 @@
       :hasErr="urlErr"
       :errMsg="urlErrMsg"
     />
-
-    <button class="submit-button" v-on:click="handleSubmit">monitor listings</button>
-  </div>
+    <div class="submit-button">
+      <button v-on:click="handleSubmit">monitor listings</button>
+    </div>
+  </fieldset>
 </template>
 
 <script>

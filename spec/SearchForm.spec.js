@@ -55,7 +55,7 @@ describe("input field validations", () => {
         });
         expect(wrapper.get(".search-form"));
 
-        wrapper.get(".submit-button").trigger("click");
+        wrapper.get("button").trigger("click");
         await wrapper.vm.$nextTick();
 
         expect(wrapper.vm.$data.nameErr).toBe(true);
@@ -76,7 +76,7 @@ describe("input field validations", () => {
         wrapper.get("#name").get("input").setValue("valid name");
         wrapper.get("#url").get("input").setValue("invalid url");
 
-        wrapper.get(".submit-button").trigger("click");
+        wrapper.get("button").trigger("click");
         await wrapper.vm.$nextTick();
 
         expect(wrapper.vm.$data.nameErr).toBe(false);
@@ -109,7 +109,7 @@ describe("submit and request", () => {
         nameInput.setValue("bladerunner");
         urlInput.setValue("https://newyork.craigslist.org/");
 
-        wrapper.get(".submit-button").trigger("click");
+        wrapper.get("button").trigger("click");
         await wrapper.vm.$nextTick();
 
         expect(wrapper.vm.$route.path).toBe(`/result/${httpReturnData.ID}`);
