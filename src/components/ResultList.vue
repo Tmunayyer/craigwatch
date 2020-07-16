@@ -15,13 +15,19 @@
   margin-bottom: 0.5em;
 }
 
+.listitem-header {
+  height: 2em;
+}
+
 .listitem-title {
   font-size: 1em;
   font-weight: bold;
+  padding: 0.2em 0.2em 0.2em 0.2em;
 }
 
 .listitem-date {
   font-size: 0.8em;
+  padding: 0.2em 0.2em 0.2em 0.2em;
 }
 
 .listitem-body {
