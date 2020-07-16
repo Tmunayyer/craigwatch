@@ -34,7 +34,8 @@
             "Name": "Major Tom",
             "URL": "https://newyork.craigslist.org/search/sss?query=ground%20control\u0026sort=rel",
             "CreatedOn": "2020-07-06T18:51:51.516996-04:00",
-            "UnixCutoffDate": 1594056360
+            "UnixCutoffDate": 1594056360,
+            "TotalCount": 1023,
         }
     ]
     ```

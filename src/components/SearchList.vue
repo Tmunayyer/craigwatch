@@ -26,6 +26,7 @@
   justify-content: space-between;
   align-content: center;
   overflow: hidden;
+  height: fit-content;
 }
 
 .header-name {
@@ -61,6 +62,15 @@
 legend {
   font-size: 0.8em;
 }
+
+.listitem-body-contents {
+  display: flex;
+  flex-direction: column;
+}
+
+.body-data {
+  margin-bottom: 0.4em;
+}
 </style>
 
 <template>
@@ -77,7 +87,10 @@ legend {
         </div>
         <fieldset class="listitem-body">
           <legend>details</legend>
-          <div>URL: {{search.URL}}</div>
+          <div class="listitem-body-contents">
+            <div class="body-data">URL: {{search.URL}}</div>
+            <div class="body-data">Listings Analyzed: {{search.TotalListings}}</div>
+          </div>
         </fieldset>
       </div>
     </li>
