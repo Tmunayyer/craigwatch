@@ -63,7 +63,6 @@
 <script>
 import Error from "./Error.vue";
 import { spinnerState } from "./Spinner.vue";
-let _RESULT_FETCH_INTERVAL; // to track the interval for cleanup later
 export default {
   name: "ResultList",
   components: {
@@ -75,7 +74,8 @@ export default {
       resultList: [],
       error: false,
       // UnixTimestamp is the cutoff to use when requesting only new listings, should be 0 on load
-      unixDate: 0
+      unixDate: 0,
+      polling: null
     };
   },
   beforeMount: async function() {
@@ -107,22 +107,12 @@ export default {
         }
       }, 3000);
     }
-
-    // update list every 60 seconds
-    _RESULT_FETCH_INTERVAL = setInterval(async () => {
-      // let these go without setting error
-      const updatedResultList = await this.getResultList();
-
-      if (updatedResultList.HasNewListings) {
-        this.unixDate = updatedResultList.Listings[0].UnixDate;
-        this.resultList = updatedResultList.Listings.concat(
-          resultList.Listings
-        );
-      }
-    }, 60000);
+  },
+  mounted: function() {
+    this.startPolling();
   },
   beforeDestroy: function() {
-    clearInterval(_RESULT_FETCH_INTERVAL);
+    this.stopPolling();
   },
   methods: {
     getResultList: async function() {
@@ -143,6 +133,25 @@ export default {
       var today = new Date(unixTimestamp);
 
       return today.toLocaleDateString("en-US", options);
+    },
+    startPolling: function() {
+      // update list every 60 seconds
+      this.polling = setInterval(async () => {
+        // let these go without setting error
+        const updatedResultList = await this.getResultList();
+
+        if (updatedResultList.HasNewListings) {
+          this.unixDate = updatedResultList.Listings[0].UnixDate;
+          this.resultList = updatedResultList.Listings.concat(
+            resultList.Listings
+          );
+        }
+      }, 60000);
+    },
+    stopPolling: function() {
+      // the next two lined must always be grouped together
+      clearInterval(this.polling);
+      this.polling = null;
     }
   }
 };
