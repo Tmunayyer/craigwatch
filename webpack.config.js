@@ -6,7 +6,7 @@ module.exports = {
     output: {
         filename: './bundle.js'
     },
-    mode: 'development',
+    mode: process.env.MODE || "development",
     module: {
         rules: [
             {

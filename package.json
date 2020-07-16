@@ -5,9 +5,10 @@
   "private": true,
   "scripts": {
     "test": "jest --watch",
-    "start": "npm run build && npm run start-server",
-    "start-server": "go run .",
-    "build": "webpack",
+    "start": "npm run build-prod && npm run server-prod",
+    "server-prod": "go run . prod",
+    "server-dev": "go run . dev",
+    "build-prod": "MODE=production webpack",
     "build-dev": "webpack --watch"
   },
   "repository": {

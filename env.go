@@ -7,7 +7,12 @@ import (
 )
 
 func setEvnironmentVariables() {
-	data, err := ioutil.ReadFile("./.env")
+	envFilePath := "./.env"
+	if os.Args[1] == "prod" {
+		envFilePath = "./.prod.env"
+	}
+
+	data, err := ioutil.ReadFile(envFilePath)
 	if err != nil {
 		panic(err)
 	}
