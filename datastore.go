@@ -62,22 +62,27 @@ const (
 // connect will set up the connection and store the connection string
 // for reference.
 func (c *client) connect() error {
-	var connectionString = fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		os.Getenv("PGHOST"),
-		os.Getenv("PGPORT"),
-		os.Getenv("PGUSER"),
-		os.Getenv("PGPASSWORD"),
-		os.Getenv("PGDATABASE"),
-	)
-
-	connection, err := sql.Open("postgres", connectionString)
+	var connection *sql.DB
+	var err error
+	if os.Getenv("MODE") == "development" {
+		var connectionString = fmt.Sprintf(
+			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+			os.Getenv("PGHOST"),
+			os.Getenv("PGPORT"),
+			os.Getenv("PGUSER"),
+			os.Getenv("PGPASSWORD"),
+			os.Getenv("PGDATABASE"),
+		)
+		c.connectionString = connectionString
+		connection, err = sql.Open("postgres", connectionString)
+	} else if os.Getenv("MODE") == "production" {
+		connection, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	}
 	if err != nil {
 		return fmt.Errorf("connection to pg failed: %v", err)
 	}
 
 	c.db = connection
-	c.connectionString = connectionString
 
 	fmt.Println("postgres connection established...")
 	return nil
