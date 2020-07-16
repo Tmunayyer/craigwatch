@@ -192,7 +192,7 @@ func (c *client) getSearch(searchID int) (clSearch, error) {
 		select
 			s.*,
 			coalesce(l.unix_cutoff_date, '0'),
-			l.total_listings
+			coalesce(l.total_listings, 0)
 		from
 			search s
 		left join
@@ -241,7 +241,7 @@ func (c *client) getSearchMulti() ([]clSearch, error) {
 		select
 			s.*,
 			coalesce(l.unix_cutoff_date, '0'),
-			l.total_listings
+			coalesce(l.total_listings, 0)
 		from
 			search s
 		left join
