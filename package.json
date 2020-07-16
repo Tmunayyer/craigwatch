@@ -9,7 +9,8 @@
     "server-prod": "go run . prod",
     "server-dev": "go run . dev",
     "build-prod": "MODE=production webpack",
-    "build-dev": "webpack --watch"
+    "build-dev": "webpack --watch",
+    "heroku-prebuild": "npm install --dev"
   },
   "repository": {
     "type": "git",
