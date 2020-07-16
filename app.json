@@ -1,0 +1,12 @@
+{
+    "name": "craigwatch",
+    "description": "An analytics platform for craigslist.com.",
+    "buildpacks": [
+        {
+            "url": "heroku/nodejs"
+        },
+        {
+            "url": "heroku/go"
+        }
+    ]
+}
