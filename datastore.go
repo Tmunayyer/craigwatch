@@ -124,6 +124,7 @@ type clSearch struct {
 	Interval       int
 	CreatedOn      time.Time
 	UnixCutoffDate int
+	TotalListings  int
 }
 
 type searchActivity struct {
@@ -190,14 +191,16 @@ func (c *client) getSearch(searchID int) (clSearch, error) {
 	rows, err := c.db.Query(`
 		select
 			s.*,
-			coalesce(l.unix_cutoff_date, '0')
+			coalesce(l.unix_cutoff_date, '0'),
+			l.total_listings
 		from
 			search s
 		left join
 			(
 				select
 					search_id,
-					max(unix_date) as "unix_cutoff_date"
+					max(unix_date) as "unix_cutoff_date",
+					count(*) as "total_listings"
 				from listing
 				group by search_id
 			) l
@@ -216,6 +219,7 @@ func (c *client) getSearch(searchID int) (clSearch, error) {
 			&output.URL,
 			&output.CreatedOn,
 			&output.UnixCutoffDate,
+			&output.TotalListings,
 		)
 		if err != nil {
 			return output, err
@@ -236,14 +240,16 @@ func (c *client) getSearchMulti() ([]clSearch, error) {
 	rows, err := c.db.Query(`
 		select
 			s.*,
-			coalesce(l.unix_cutoff_date, '0')
+			coalesce(l.unix_cutoff_date, '0'),
+			l.total_listings
 		from
 			search s
 		left join
 			(
 				select
 					search_id,
-					max(unix_date) as "unix_cutoff_date"
+					max(unix_date) as "unix_cutoff_date",
+					count(*) as "total_listings"
 				from listing
 				group by search_id
 			) l
@@ -262,6 +268,7 @@ func (c *client) getSearchMulti() ([]clSearch, error) {
 			&q.URL,
 			&q.CreatedOn,
 			&q.UnixCutoffDate,
+			&q.TotalListings,
 		)
 		if err != nil {
 			return output, err
