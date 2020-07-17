@@ -8,8 +8,9 @@ import (
 
 func setEvnironmentVariables() {
 	envFilePath := "./.env"
-	if os.Args[1] == "prod" {
-		envFilePath = "./.prod.env"
+	if os.Getenv("MODE") == "production" {
+		// there is nothing to do here in production
+		return
 	}
 
 	data, err := ioutil.ReadFile(envFilePath)

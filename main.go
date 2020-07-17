@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	craigslist "github.com/tmunayyer/go-craigslist"
 )
@@ -18,8 +19,13 @@ func main() {
 
 	initializeAPI()
 
-	fmt.Println("listening on: localhost:3000")
-	log.Fatal(http.ListenAndServe(":3000", nil))
+	port := ":3000"
+	prodPort := os.Getenv("PORT")
+	if prodPort != "" {
+		port = ":" + prodPort
+	}
+	fmt.Println("listening on: localhost", port)
+	log.Fatal(http.ListenAndServe(port, nil))
 }
 
 func initializeAPI() {

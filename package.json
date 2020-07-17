@@ -8,7 +8,7 @@
     "start": "npm run server",
     "server": "./craigwatch prod",
     "server-dev": "go run . dev",
-    "build": "MODE=production webpack && go build",
+    "build": "MODE=production webpack",
     "build-dev": "webpack --watch"
   },
   "repository": {
