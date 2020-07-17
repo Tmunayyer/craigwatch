@@ -8,7 +8,7 @@ import (
 
 func setEvnironmentVariables() {
 	envFilePath := "./.env"
-	if os.Args[1] == "prod" {
+	if os.Getenv("MODE") == "production" {
 		envFilePath = "./.prod.env"
 	}
 
