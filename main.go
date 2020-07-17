@@ -22,9 +22,9 @@ func main() {
 	port := ":3000"
 	prodPort := os.Getenv("PORT")
 	if prodPort != "" {
-		port = prodPort
+		port = ":" + prodPort
 	}
-	fmt.Println("listening on: localhost:3000")
+	fmt.Println("listening on: localhost", port)
 	log.Fatal(http.ListenAndServe(port, nil))
 }
 
