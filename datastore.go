@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
+	"strconv"
 	"time"
 
 	// postgres driver
-	"github.com/lib/pq"
+	_ "github.com/lib/pq" // here
 )
 
 // TODO: rename monitor table to search
@@ -306,35 +306,77 @@ func (c *client) deleteSearch(id int) error {
 }
 
 func (c *client) saveListingMulti(searchID int, listings []clListing) error {
-	txn, err := c.db.Begin()
-	if err != nil {
-		log.Fatal(err)
-	}
+	fmt.Println("the searchid:", strconv.Itoa(searchID))
+	insertStatement := `
+		insert into 
+			listing 
+			(search_id, data_pid, data_repost_of, unix_date, title, link, price, hood) 
+		values
+	`
+	conflictStatement := `
+		on conflict (data_pid)
+		do update set
+			data_repost_of = excluded.data_repost_of,
+			unix_date = excluded.unix_date,
+			title = excluded.title,
+			link = excluded.link,
+			price = excluded.link,
+			hood = excluded.hood;
+	`
 
-	stmt, err := txn.Prepare(pq.CopyIn("listing", "search_id", "data_pid", "data_repost_of", "unix_date", "title", "link", "price", "hood"))
-	if err != nil {
-		return err
-	}
+	valueStatement := ""
+	values := make([]interface{}, 0, len(listings)*8+1)
+	vIndex := 1
+	for i, listing := range listings {
 
-	for _, l := range listings {
-		_, err = stmt.Exec(searchID, l.DataPID, l.DataRepostOf, l.UnixDate, l.Title, l.Link, l.Price, l.Hood)
+		row := ""
 
-		if err != nil {
-			return err
+		row += "$" + strconv.Itoa(vIndex) + ","
+		values = append(values, searchID)
+		vIndex++
+
+		row += "$" + strconv.Itoa(vIndex) + ","
+		values = append(values, listing.DataPID)
+		vIndex++
+
+		row += "$" + strconv.Itoa(vIndex) + ","
+		values = append(values, listing.DataRepostOf)
+		vIndex++
+
+		row += "$" + strconv.Itoa(vIndex) + ","
+		values = append(values, listing.UnixDate)
+		vIndex++
+
+		row += "$" + strconv.Itoa(vIndex) + ","
+		values = append(values, listing.Title)
+		vIndex++
+
+		row += "$" + strconv.Itoa(vIndex) + ","
+		values = append(values, listing.Link)
+		vIndex++
+
+		row += "$" + strconv.Itoa(vIndex) + ","
+		values = append(values, listing.Price)
+		vIndex++
+
+		row += "$" + strconv.Itoa(vIndex)
+		values = append(values, listing.Hood)
+		vIndex++
+
+		row = "(" + row + ")"
+
+		if i < len(listings)-1 {
+			row += ","
 		}
+
+		valueStatement += row
+
 	}
 
-	_, err = stmt.Exec()
-	if err != nil {
-		return err
-	}
+	statement := insertStatement + valueStatement + conflictStatement
 
-	err = stmt.Close()
-	if err != nil {
-		return err
-	}
+	_, err := c.db.Query(statement, values...)
 
-	err = txn.Commit()
 	if err != nil {
 		return err
 	}

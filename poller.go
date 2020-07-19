@@ -95,7 +95,10 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		listingsToSave, maxUnixDate := pc.processNewListings(result)
 
 		fmt.Println("-- id", search.ID, "saving ", len(result.Listings), " new listings...") // intentional
-		pc.db.saveListingMulti(search.ID, listingsToSave)
+		err := pc.db.saveListingMulti(search.ID, listingsToSave)
+		if err != nil {
+			fmt.Println("err saving listings:", err)
+		}
 
 		newCutoff = pc.calculateCutoff(maxUnixDate)
 
