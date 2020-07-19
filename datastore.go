@@ -319,7 +319,7 @@ func (c *client) saveListingMulti(searchID int, listings []clListing) error {
 			unix_date = excluded.unix_date,
 			title = excluded.title,
 			link = excluded.link,
-			price = excluded.link,
+			price = excluded.price,
 			hood = excluded.hood;
 	`
 
