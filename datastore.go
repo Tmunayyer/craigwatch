@@ -306,7 +306,6 @@ func (c *client) deleteSearch(id int) error {
 }
 
 func (c *client) saveListingMulti(searchID int, listings []clListing) error {
-	fmt.Println("the searchid:", strconv.Itoa(searchID))
 	insertStatement := `
 		insert into 
 			listing 
