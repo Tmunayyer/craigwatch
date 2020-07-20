@@ -81,15 +81,16 @@ legend {
         <div class="listitem-header">
           <div class="header-name">{{ search.Name }}</div>
           <div class="header-date">
-            <div>Monitored Since</div>
-            <div>{{ formatDate(search.CreatedOn) }}</div>
+            <div>last fetched</div>
+            <div>{{formatDate(search.UnixCutoffDate)}}</div>
           </div>
         </div>
         <fieldset class="listitem-body">
           <legend>details</legend>
           <div class="listitem-body-contents">
-            <div class="body-data">URL: {{search.URL}}</div>
-            <div class="body-data">Listings Analyzed: {{search.TotalListings}}</div>
+            <div class="body-data">monitored since: {{ formatDate(search.CreatedOn) }}</div>
+            <div class="body-data">listings analyzed: {{search.TotalListings}}</div>
+            <div class="body-data">{{search.URL}}</div>
           </div>
         </fieldset>
       </div>
@@ -99,6 +100,8 @@ legend {
 
 <script>
 import Error from "./Error.vue";
+
+import util from "../utility.js";
 
 export default {
   name: "SearchList",
@@ -120,6 +123,7 @@ export default {
     }
   },
   methods: {
+    formatDate: util.formatDate,
     redirector: function(search) {
       this.$router.push(`/result/${search.ID}`);
     },
@@ -128,17 +132,6 @@ export default {
       const body = await this.$http(apiUrl);
 
       return body;
-    },
-    formatDate: function(date) {
-      var options = {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-      };
-      var today = new Date(date);
-
-      return today.toLocaleDateString("en-US");
     }
   }
 };
