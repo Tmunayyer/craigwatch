@@ -510,60 +510,6 @@ func (c *client) getSearchActivity(searchID int) (searchActivity, error) {
 	output := searchActivity{}
 
 	rows, err := c.db.Query(`
-		with order_by_date as (
-			select 
-				l.*
-			from listing l
-			left join search s
-			on l.search_id = s.id
-			where s.id = $1
-			order by unix_date desc
-		),
-		
-		time_between_posts as ( 
-			select
-				ao.search_id,
-				unix_date - lead(unix_date, 1) over (order by unix_date desc) as time_between
-			from order_by_date ao
-		)
-		
-		select
-			tbp.search_id,
-			round(avg(tbp.time_between)) as in_seconds,
-			round(avg(tbp.time_between) / 60, 2) as in_minutes,
-			round(avg(tbp.time_between) / 60 / 60, 2) as in_hours
-		from time_between_posts tbp
-		group by tbp.search_id;
-	`, searchID)
-
-	if err != nil {
-		return output, err
-	}
-
-	for rows.Next() {
-		err := rows.Scan(
-			&output.ID,
-			&output.InSeconds,
-			&output.InMinutes,
-			&output.InHours,
-		)
-		if err != nil {
-			return output, err
-		}
-	}
-
-	err = rows.Err()
-	if err != nil {
-		return output, err
-	}
-
-	return output, nil
-}
-
-func (c *client) getSearchRepostActivity(searchID int) (searchActivity, error) {
-	output := searchActivity{}
-
-	rows, err := c.db.Query(`
 		with total_listings as (
 			select 
 				l.*
@@ -577,10 +523,8 @@ func (c *client) getSearchRepostActivity(searchID int) (searchActivity, error) {
 		repost_listings as (
 			select
 				*
-			from
-				total_listings
-			where
-				total_listings.data_repost_of <> ''
+			from total_listings
+			where total_listings.data_repost_of <> ''
 		),
 		
 		time_between_posts as ( 
@@ -630,11 +574,8 @@ func (c *client) getSearchRepostActivity(searchID int) (searchActivity, error) {
 			pf.total_count,
 			rpf.repost_count,
 			round(rpf.repost_count::numeric / pf.total_count::numeric, 2) as percent_reposts
-		from
-			post_frequency as pf
-		full join 
-			repost_frequency rpf
-			on pf.search_id = rpf.search_id
+		from post_frequency as pf
+		full join repost_frequency rpf on pf.search_id = rpf.search_id
 	`, searchID)
 
 	if err != nil {
