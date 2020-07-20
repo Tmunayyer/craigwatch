@@ -1,10 +1,11 @@
 // webpack.config.js
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: './src/index.js',
     output: {
-        filename: './bundle.js'
+        filename: 'bundle.[contenthash].js'
     },
     mode: process.env.MODE || "development",
     module: {
@@ -32,6 +33,9 @@ module.exports = {
     },
     plugins: [
         // make sure to include the plugin for the magic
-        new VueLoaderPlugin()
+        new VueLoaderPlugin(),
+        new HtmlWebpackPlugin({
+            template: './src/index.html'
+        })
     ]
 };

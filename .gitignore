@@ -24,7 +24,9 @@ node_modules
 package-lock.json
 
 # builds
-bundle.js
+bundle.*.js
+/dist/index.html
+
 
 # go builds
 craigwatch
