@@ -18,6 +18,10 @@
   font-size: 0.8em;
   color: red;
 }
+
+input::placeholder {
+  opacity: 0.7;
+}
 </style>
 
 <template>

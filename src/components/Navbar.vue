@@ -39,7 +39,10 @@ ol {
 <template>
   <div class="navbar">
     <ol class="links">
-      <img class="nav-logo" src="craigswatchLogo3.png" />
+      <router-link class="nav-link" to="/">
+        <img class="nav-logo" src="craigswatchLogo3.png" />
+      </router-link>
+
       <li class="nav-item">
         <router-link class="nav-link" to="/">search</router-link>
       </li>
