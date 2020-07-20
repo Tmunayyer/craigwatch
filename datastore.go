@@ -133,10 +133,16 @@ type clSearch struct {
 }
 
 type searchActivity struct {
-	ID        int
-	InSeconds int
-	InMinutes float32
-	InHours   float32
+	ID              int
+	InSeconds       int
+	InMinutes       float32
+	InHours         float32
+	RepostInSeconds int
+	RepostInMinutes float32
+	RepostInHours   float32
+	TotalCount      int
+	RepostCount     int
+	PercentRepost   float32
 }
 
 type clListing struct {
@@ -540,6 +546,113 @@ func (c *client) getSearchActivity(searchID int) (searchActivity, error) {
 			&output.InSeconds,
 			&output.InMinutes,
 			&output.InHours,
+		)
+		if err != nil {
+			return output, err
+		}
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
+}
+
+func (c *client) getSearchRepostActivity(searchID int) (searchActivity, error) {
+	output := searchActivity{}
+
+	rows, err := c.db.Query(`
+		with total_listings as (
+			select 
+				l.*
+			from listing l
+			left join search s
+			on l.search_id = s.id
+			where s.id = $1
+			order by unix_date desc
+		),
+		
+		repost_listings as (
+			select
+				*
+			from
+				total_listings
+			where
+				total_listings.data_repost_of <> ''
+		),
+		
+		time_between_posts as ( 
+			select
+				tl.search_id,
+				unix_date - lead(unix_date, 1) over (order by unix_date desc) as time_between
+			from total_listings tl
+		),
+		
+		time_between_reposts as ( 
+			select
+				rpl.search_id,
+				unix_date - lead(unix_date, 1) over (order by unix_date desc) as time_between
+			from repost_listings rpl
+		),
+		
+		post_frequency as (
+			select
+				tbp.search_id,
+				count(*) as total_count,
+				round(avg(tbp.time_between)) as in_seconds,
+				round(avg(tbp.time_between) / 60, 2) as in_minutes,
+				round(avg(tbp.time_between) / 60 / 60, 2) as in_hours
+			from time_between_posts tbp
+			group by tbp.search_id
+		),
+		
+		repost_frequency as (
+			select
+				tbrp.search_id,
+				count(*) as repost_count,
+				round(avg(tbrp.time_between)) as in_seconds,
+				round(avg(tbrp.time_between) / 60, 2) as in_minutes,
+				round(avg(tbrp.time_between) / 60 / 60, 2) as in_hours
+			from time_between_reposts tbrp
+			group by tbrp.search_id
+		)
+		
+		select
+			pf.search_id,
+			pf.in_seconds,
+			pf.in_minutes,
+			pf.in_hours,
+			rpf.in_seconds as repost_in_seconds,
+			rpf.in_minutes as repost_in_minutes,
+			rpf.in_hours as repost_in_hours,
+			pf.total_count,
+			rpf.repost_count,
+			round(rpf.repost_count::numeric / pf.total_count::numeric, 2) as percent_reposts
+		from
+			post_frequency as pf
+		full join 
+			repost_frequency rpf
+			on pf.search_id = rpf.search_id
+	`, searchID)
+
+	if err != nil {
+		return output, err
+	}
+
+	for rows.Next() {
+		err := rows.Scan(
+			&output.ID,
+			&output.InSeconds,
+			&output.InMinutes,
+			&output.InHours,
+			&output.RepostInSeconds,
+			&output.RepostInMinutes,
+			&output.RepostInHours,
+			&output.TotalCount,
+			&output.RepostCount,
+			&output.PercentRepost,
 		)
 		if err != nil {
 			return output, err
