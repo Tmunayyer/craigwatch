@@ -69,6 +69,9 @@
 <script>
 import Error from "./Error.vue";
 import { spinnerState } from "./Spinner.vue";
+
+import util from "../utility.js";
+
 export default {
   name: "ResultList",
   components: {
@@ -121,24 +124,13 @@ export default {
     this.stopPolling();
   },
   methods: {
+    formatDate: util.formatDate,
     getResultList: async function() {
       const list = await this.$http(
         `/api/v1/listing?ID=${this.searchID}&Datetime=${this.unixDate}`
       );
 
       return list;
-    },
-    formatDate: function(unixTimestamp) {
-      var options = {
-        year: "numeric",
-        month: "numeric",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      };
-      var today = new Date(unixTimestamp);
-
-      return today.toLocaleDateString("en-US", options);
     },
     startPolling: function() {
       // update list every 60 seconds

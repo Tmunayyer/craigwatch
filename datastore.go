@@ -128,7 +128,7 @@ type clSearch struct {
 	Confirmed      bool
 	Interval       int
 	CreatedOn      time.Time
-	UnixCutoffDate int
+	UnixCutoffDate int64
 	TotalListings  int
 }
 
