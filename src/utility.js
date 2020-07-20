@@ -7,7 +7,6 @@ export default {
      * @returns {string}
      */
     formatDate: function (date) {
-        console.log("the date:", date);
         const options = {
             year: "numeric",
             month: "numeric",

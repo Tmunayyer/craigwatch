@@ -82,7 +82,7 @@ legend {
           <div class="header-name">{{ search.Name }}</div>
           <div class="header-date">
             <div>last fetched</div>
-            <div>{{formatDate(search.UnixCutoffDate)}}</div>
+            <div>{{ formatDate(search.UnixCutoffDate*1000) }}</div>
           </div>
         </div>
         <fieldset class="listitem-body">
