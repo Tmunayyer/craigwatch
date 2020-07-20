@@ -23,11 +23,32 @@ legend {
   display: flex;
   justify-content: flex-end;
 }
+
+.instructions {
+  font-size: 0.85em;
+}
+
+.instructions ol li {
+  padding: 0.2em;
+}
 </style>
 
 <template>
   <fieldset class="search-form">
     <legend>new search</legend>
+    <div class="instructions">
+      <ol>
+        <li>
+          1. navigate to
+          <a target="_blank" href="https://craigslist.org/">https://craigslist.org/</a>
+        </li>
+        <li>2. select a category or perform a search</li>
+        <li>3. copy the URL in the browser and paste it here</li>
+      </ol>
+    </div>
+
+    <hr />
+
     <InputWithError
       id="name"
       v-model="name"
