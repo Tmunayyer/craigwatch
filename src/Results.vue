@@ -8,6 +8,9 @@
 <template>
   <div class="page-container">
     <ResultSummary v-bind:searchID="searchID" />
+    <div>
+      <ActivityMetric />
+    </div>
     <br />
     <ResultList v-bind:searchID="searchID" />
   </div>
@@ -16,12 +19,14 @@
 <script>
 import ResultSummary from "./components/ResultSummary.vue";
 import ResultList from "./components/ResultList.vue";
+import ActivityMetric from "./components/ActivityMetric.vue";
 
 export default {
   name: "Results",
   components: {
     ResultSummary,
-    ResultList
+    ResultList,
+    ActivityMetric
   },
   data() {
     return {
