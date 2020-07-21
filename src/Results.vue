@@ -11,6 +11,7 @@
     <div>
       <ListingMetric />
       <RepostMetric />
+      <PostVsRepost />
     </div>
     <br />
     <ResultList v-bind:searchID="searchID" />
@@ -22,6 +23,7 @@ import ResultSummary from "./components/ResultSummary.vue";
 import ResultList from "./components/ResultList.vue";
 import ListingMetric from "./components/metrics/ListingMetric.vue";
 import RepostMetric from "./components/metrics/RepostMetric.vue";
+import PostVsRepost from "./components/metrics/PostVsRepost.vue";
 
 export const resultPageState = {
   state: {
@@ -38,7 +40,8 @@ export default {
     ResultSummary,
     ResultList,
     ListingMetric,
-    RepostMetric
+    RepostMetric,
+    PostVsRepost
   },
   beforeMount: async function() {
     const { ID } = this.$route.params;
