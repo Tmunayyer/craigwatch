@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +14,7 @@ var testSearch = clSearch{
 var testListings = []clListing{
 	{
 		DataPID:      "123456",
-		DataRepostOf: "",
+		DataRepostOf: "987654",
 		UnixDate:     newUnixDate("2020-01-02 12:00"),
 		Title:        "testListingNumeroUno",
 		Link:         "www.testing.com",
@@ -24,7 +23,7 @@ var testListings = []clListing{
 	},
 	{
 		DataPID:      "654321",
-		DataRepostOf: "",
+		DataRepostOf: "123498",
 		UnixDate:     newUnixDate("2020-01-01 12:00"),
 		Title:        "testListingNumeroDOS",
 		Link:         "www.testing.com",
@@ -211,7 +210,6 @@ func TestGetListingMulti(t *testing.T) {
 		assert.NoError(t, err)
 
 		unixTime := newUnixDate("2020-01-01 12:00")
-		fmt.Println("the test unix", unixTime)
 
 		savedListings, err := c.getListingMultiAfter(search.ID, unixTime)
 		assert.NoError(t, err)
@@ -242,8 +240,6 @@ func TestListingActivity(t *testing.T) {
 
 		activity, err := c.getSearchActivity(search.ID)
 		assert.NoError(t, err)
-
-		fmt.Println()
 
 		assert.Equal(t, float32(24), activity.InHours)
 
