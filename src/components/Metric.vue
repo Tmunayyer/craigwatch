@@ -48,9 +48,9 @@ select {
     </template>
     <template v-else>
       <div class="measurement">
-        <label>per</label>
+        <label>{{ computedLabel }}</label>
         <select name="granularity" v-model="selected">
-          <option v-for="(_, label) in data" :key="label" :value="label">{{label}}</option>
+          <option v-for="(_, name) in data" :key="name" :value="name">{{name}}</option>
         </select>
       </div>
 
@@ -62,11 +62,20 @@ select {
 <script>
 export default {
   name: "Metric",
-  props: ["metricname", "data", "defaultSelected", "error"],
+  props: ["label", "metricname", "data", "defaultSelected", "error"],
   data() {
     return {
       selected: this.$props.defaultSelected
     };
+  },
+  computed: {
+    computedLabel: function() {
+      if (this.$props.label !== undefined) {
+        return this.$props.label;
+      } else {
+        return "per";
+      }
+    }
   }
 };
 </script>

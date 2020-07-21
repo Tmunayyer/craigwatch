@@ -88,33 +88,11 @@ export default {
     };
   },
   beforeMount: async function() {
-    let initResultList;
     try {
-      initResultList = await this.getResultList();
+      const initResultList = await this.getResultList(true);
+      this.resultList = initResultList;
     } catch (err) {
       this.error = true;
-      return;
-    }
-
-    if (initResultList.HasNewListings) {
-      this.unixDate = initResultList.Listings[0].UnixDate;
-      this.resultList = initResultList.Listings;
-    } else {
-      setTimeout(async () => {
-        // on new search created, the backend takes a second to get listings.
-        // because of this, retry after 3 seconds and then spawn interval.
-        try {
-          initResultList = await this.getResultList();
-        } catch (err) {
-          this.error = true;
-          return;
-        }
-
-        if (initResultList.HasNewListings) {
-          this.unixDate = initResultList.Listings[0].UnixDate;
-          this.resultList = initResultList.Listings;
-        }
-      }, 3000);
     }
   },
   mounted: function() {
@@ -125,12 +103,22 @@ export default {
   },
   methods: {
     formatDate: util.formatDate,
-    getResultList: async function() {
-      const list = await this.$http(
-        `/api/v1/listing?ID=${this.searchID}&Datetime=${this.unixDate}`
-      );
+    getResultList: async function(retry) {
+      const { fetch, fetchRetry } = this.$http;
+      let url = `/api/v1/listing?ID=${this.searchID}&Datetime=${this.unixDate}`;
 
-      return list;
+      let result;
+      if (retry) {
+        result = await fetchRetry(url, {}, data => !data.HasNewListings);
+      } else {
+        result = await fetch(url);
+      }
+
+      if (result.HasNewListings) {
+        return result.Listings;
+      } else {
+        return [];
+      }
     },
     startPolling: function() {
       // update list every 60 seconds

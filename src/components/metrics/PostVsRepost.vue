@@ -1,0 +1,50 @@
+<template>
+  <Metric
+    :metricname="'post / repost'"
+    :data="privateState.data"
+    :defaultSelected="'% reposts'"
+    :error="privateState.error"
+    :label="''"
+  />
+</template>
+
+<script>
+import Metric from "../Metric.vue";
+import { resultPageState } from "../../Results.vue";
+
+export default {
+  name: "PostVsRepost",
+  components: {
+    Metric
+  },
+  data() {
+    return {
+      privateState: {
+        data: {},
+        error: false
+      },
+      sharedState: resultPageState.state
+    };
+  },
+  beforeMount: function() {
+    this.privateState.data = this.transformData();
+  },
+  methods: {
+    transformData: function() {
+      const displayMap = {
+        TotalCount: "# of posts",
+        RepostCount: "# of reposts",
+        PercentRepost: "% reposts"
+      };
+
+      let pairs = {};
+      for (const key in this.sharedState.activityData) {
+        if (displayMap[key] === undefined) continue;
+        pairs[displayMap[key]] = this.sharedState.activityData[key];
+      }
+
+      return pairs;
+    }
+  }
+};
+</script>

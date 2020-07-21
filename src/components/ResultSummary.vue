@@ -3,11 +3,13 @@
   margin-bottom: 1em;
   overflow: hidden;
 
+  box-sizing: border-box;
+
   background-color: #f3f2f2;
   border: 1px solid #a7a7a7;
 
   width: 100%;
-  max-width: 375px;
+  max-width: 450px;
 
   padding: 1em;
   border-radius: 4px;
@@ -27,6 +29,12 @@
   padding: 0.2em 0.2em 0.2em 0.2em;
   text-decoration: none;
   font-size: 0.8em;
+}
+
+@media screen and (max-width: 450px) {
+  .result-header {
+    width: 100%;
+  }
 }
 </style>
 
@@ -67,7 +75,7 @@ export default {
   },
   methods: {
     getSearchDetails: async function() {
-      const details = await this.$http(
+      const details = await this.$http.fetch(
         `/api/v1/search?ID=${this.$props.searchID}`
       );
 

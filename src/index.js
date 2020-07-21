@@ -4,12 +4,12 @@ import { router } from './router.js';
 
 import App from './App.vue';
 
-import api from './api.js';
+import API from './api.js';
 
 Vue.config.productionTip = false;
 
 // aliasing
-Vue.prototype.$http = api;
+Vue.prototype.$http = new API();
 
 new Vue({
   router,

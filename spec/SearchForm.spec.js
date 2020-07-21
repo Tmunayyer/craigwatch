@@ -46,7 +46,7 @@ describe("input field validations", () => {
     it("should detect empty fields", async () => {
         const wrapper = mount(SearchForm, {
             mocks: {
-                $http: mocker.api({
+                $http: new mocker.api({
                     shouldFail: true,
                     data: {},
                 })
@@ -64,7 +64,7 @@ describe("input field validations", () => {
     it("should validate the url", async () => {
         const wrapper = mount(SearchForm, {
             mocks: {
-                $http: mocker.api({
+                $http: new mocker.api({
                     shouldFail: true,
                     data: {},
                 })
@@ -93,7 +93,7 @@ describe("submit and request", () => {
         const wrapper = mount(SearchForm, {
             router,
             mocks: {
-                $http: mocker.api({
+                $http: new mocker.api({
                     shouldFail: false,
                     data: httpReturnData
                 })
