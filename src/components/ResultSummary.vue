@@ -67,7 +67,7 @@ export default {
   },
   methods: {
     getSearchDetails: async function() {
-      const details = await this.$http(
+      const details = await this.$http.fetch(
         `/api/v1/search?ID=${this.$props.searchID}`
       );
 

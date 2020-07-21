@@ -25,7 +25,7 @@ export default {
   },
   methods: {
     getData: async function() {
-      const data = await this.$http(
+      const data = await this.$http.fetch(
         `/api/v1/metric?ID=${this.$route.params.ID}`
       );
       return data;

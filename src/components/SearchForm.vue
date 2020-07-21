@@ -106,7 +106,7 @@ export default {
         body: JSON.stringify({ Name: this.name, URL: this.url })
       };
 
-      const search = await this.$http(apiUrl, apiOptions);
+      const search = await this.$http.fetch(apiUrl, apiOptions);
 
       this.redirector(search);
     },

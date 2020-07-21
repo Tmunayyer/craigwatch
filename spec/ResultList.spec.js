@@ -34,7 +34,7 @@ describe("list rendering", () => {
     it("should render the listings", async () => {
         const list = mount(ResultList, {
             mocks: {
-                $http: mocker.api({
+                $http: new mocker.api({
                     shouldFail: false,
                     data: fakeListings
                 })
@@ -49,7 +49,7 @@ describe("list rendering", () => {
     it("should render the listings", async () => {
         const list = mount(ResultList, {
             mocks: {
-                $http: mocker.api({
+                $http: new mocker.api({
                     shouldFail: true,
                     data: []
                 })
@@ -69,7 +69,7 @@ describe("list rendering", () => {
     it("should correctly manage the interval", async () => {
         const list = mount(ResultList, {
             mocks: {
-                $http: mocker.api({
+                $http: new mocker.api({
                     shouldFail: false,
                     data: fakeListings
                 })

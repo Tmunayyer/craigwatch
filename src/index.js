@@ -4,12 +4,14 @@ import { router } from './router.js';
 
 import App from './App.vue';
 
-import api from './api.js';
+import API from './api.js';
 
 Vue.config.productionTip = false;
 
+console.log("bladerunner:", API);
+
 // aliasing
-Vue.prototype.$http = api;
+Vue.prototype.$http = API;
 
 new Vue({
   router,

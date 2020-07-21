@@ -24,7 +24,7 @@ describe("list rendering", () => {
     const sl = mount(SearchList, {
         router,
         mocks: {
-            $http: mocker.api({
+            $http: new mocker.api({
                 shouldFail: false,
                 data: fakeSearchList
             })
@@ -58,7 +58,7 @@ describe("api error state", () => {
     it("should not display the error", async () => {
         const sl = mount(SearchList, {
             mocks: {
-                $http: mocker.api({
+                $http: new mocker.api({
                     shouldFail: false,
                     data: []
                 })
@@ -74,7 +74,7 @@ describe("api error state", () => {
     it("should display the error", async () => {
         const sl = mount(SearchList, {
             mocks: {
-                $http: mocker.api({
+                $http: new mocker.api({
                     shouldFail: true,
                     data: []
                 })

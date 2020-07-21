@@ -126,7 +126,7 @@ export default {
   methods: {
     formatDate: util.formatDate,
     getResultList: async function() {
-      const list = await this.$http(
+      const list = await this.$http.fetch(
         `/api/v1/listing?ID=${this.searchID}&Datetime=${this.unixDate}`
       );
 

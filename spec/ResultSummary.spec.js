@@ -14,7 +14,7 @@ describe("should display data", () => {
     it("should render", async () => {
         const summary = mount(ResultSummary, {
             mocks: {
-                $http: mocker.api({
+                $http: new mocker.api({
                     shouldFail: false,
                     data: fakeSearchDetails
                 })
@@ -34,7 +34,7 @@ describe("should display data", () => {
     it("should handle api erros", async () => {
         const summary = mount(ResultSummary, {
             mocks: {
-                $http: mocker.api({
+                $http: new mocker.api({
                     shouldFail: true,
                     data: {}
                 })
