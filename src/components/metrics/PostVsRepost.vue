@@ -4,6 +4,7 @@
     :data="privateState.data"
     :defaultSelected="'% reposts'"
     :error="privateState.error"
+    :label="''"
   />
 </template>
 
