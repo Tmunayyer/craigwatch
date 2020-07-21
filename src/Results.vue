@@ -19,7 +19,7 @@
 <script>
 import ResultSummary from "./components/ResultSummary.vue";
 import ResultList from "./components/ResultList.vue";
-import ActivityMetric from "./components/ActivityMetric.vue";
+import ActivityMetric from "./components/metrics/ActivityMetric.vue";
 
 export default {
   name: "Results",

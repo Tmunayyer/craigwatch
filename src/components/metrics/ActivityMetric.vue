@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import Metric from "./Metric.vue";
+import Metric from "../Metric.vue";
 export default {
   name: "ActivityMetric",
   components: {
@@ -39,7 +39,6 @@ export default {
 
       let pairs = {};
       for (const key in obj) {
-        // [name, data]
         if (key === "ID") continue;
         pairs[displayMap[key]] = obj[key];
       }
