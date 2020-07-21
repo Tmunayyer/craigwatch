@@ -3,7 +3,7 @@ class MockAPI {
         this.options = options;
     }
 
-    fetch() {
+    fetch = () => {
         return new Promise((resolve, reject) => {
             if (this.options.shouldFail) {
                 reject(this.options.data);
@@ -11,7 +11,17 @@ class MockAPI {
 
             resolve(this.options.data);
         });
-    }
+    };
+
+    fetch_retry = () => {
+        return new Promise((resolve, reject) => {
+            if (this.options.shouldFail) {
+                reject(this.options.data);
+            }
+
+            resolve(this.options.data);
+        });
+    };
 }
 
 export default {

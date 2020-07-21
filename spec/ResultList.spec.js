@@ -40,6 +40,7 @@ describe("list rendering", () => {
                 })
             }
         });
+
         // required to await when mounting inside a test
         await list.vm.$nextTick();
         expect(list.exists());

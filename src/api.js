@@ -3,7 +3,7 @@ import { spinnerState } from "./components/Spinner.vue";
 class API {
     constructor(timeout, tries) {
         this.defaultTimeout = timeout || 3000;
-        this.tries = tries || 3;
+        this.tries = tries || 2;
     }
 }
 
