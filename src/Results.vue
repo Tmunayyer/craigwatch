@@ -3,12 +3,28 @@
   box-sizing: border-box;
   width: 100%;
 }
+
+.metric-container {
+  display: flex;
+  flex-direction: row;
+
+  justify-content: space-between;
+  flex-wrap: wrap;
+
+  width: 450px;
+}
+
+@media screen and (max-width: 450px) {
+  .metric-container {
+    width: 100%;
+  }
+}
 </style>
 
 <template>
   <div v-if="!loading" class="page-container">
     <ResultSummary v-bind:searchID="searchID" />
-    <div>
+    <div class="metric-container">
       <ListingMetric />
       <RepostMetric />
       <PostVsRepost />

@@ -1,6 +1,6 @@
 <template>
   <Metric
-    :metricname="'reposts'"
+    :metricname="'post / repost'"
     :data="privateState.data"
     :defaultSelected="'% reposts'"
     :error="privateState.error"
