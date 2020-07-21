@@ -14,7 +14,7 @@ class TinyTidyPlugin {
         if (compiler.options.mode !== "development") return;
 
         const callback = this._doSomething.bind(this, compiler);
-        compiler.hooks.beforeCompile.tapAsync('TinyTidyPlugin', callback);
+        compiler.hooks.compile.tap('TinyTidyPlugin', callback);
     };
 
     _doSomething = function (compiler, details, done) {
@@ -30,7 +30,7 @@ class TinyTidyPlugin {
             }
         }
 
-        done();
+        // done();
     };
 };
 

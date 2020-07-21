@@ -13,7 +13,7 @@ class MockAPI {
         });
     };
 
-    fetch_retry = () => {
+    fetchRetry = () => {
         return new Promise((resolve, reject) => {
             if (this.options.shouldFail) {
                 reject(this.options.data);

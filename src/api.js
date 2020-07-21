@@ -4,6 +4,9 @@ class API {
     constructor(timeout, tries) {
         this.defaultTimeout = timeout || 3000;
         this.tries = tries || 2;
+
+        this.fetch = this.fetch.bind(this);
+        this.fetchRetry = this.fetchRetry.bind(this);
     }
 
     /**
@@ -22,7 +25,7 @@ class API {
     };
 
     /**
-     * fetch_retry will use the shouldRetry function to inspect the body returned from
+     * fetchRetry will use the shouldRetry function to inspect the body returned from
      *  the initial request. If true, it will begin retrying the
      *  request at increasing intervals. If it returns false, it will return the body.
      * 
@@ -30,7 +33,7 @@ class API {
      * @param {object} options 
      * @param {function} cb 
      */
-    async fetch_retry(url, options, shouldRetry) {
+    async fetchRetry(url, options, shouldRetry) {
         spinnerState.setLoading(true);
 
         let response;

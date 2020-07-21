@@ -38,7 +38,7 @@ describe("fetch", () => {
     });
 });
 
-describe("fetch_retry", () => {
+describe("fetchRetry", () => {
     const api = new API({
         defaultTimeout: 100,
         tries: 2
@@ -54,7 +54,7 @@ describe("fetch_retry", () => {
         };
 
         const shouldRetry = data => data.retryme;
-        const data = await api.fetch_retry("testurl.something", config, shouldRetry);
+        const data = await api.fetchRetry("testurl.something", config, shouldRetry);
         expect(fetchSpy.callCount).toBe(3);
     });
 
@@ -69,7 +69,7 @@ describe("fetch_retry", () => {
         };
 
         const shouldRetry = () => false;
-        const data = await api.fetch_retry("testurl.something", config, shouldRetry);
+        const data = await api.fetchRetry("testurl.something", config, shouldRetry);
         expect(fetchSpy.callCount).toBe(1);
     });
 });

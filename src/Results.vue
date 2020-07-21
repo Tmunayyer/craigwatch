@@ -6,10 +6,11 @@
 </style>
 
 <template>
-  <div class="page-container">
+  <div v-if="!loading" class="page-container">
     <ResultSummary v-bind:searchID="searchID" />
     <div>
-      <ActivityMetric />
+      <ListingMetric />
+      <RepostMetric />
     </div>
     <br />
     <ResultList v-bind:searchID="searchID" />
@@ -19,18 +20,43 @@
 <script>
 import ResultSummary from "./components/ResultSummary.vue";
 import ResultList from "./components/ResultList.vue";
-import ActivityMetric from "./components/metrics/ActivityMetric.vue";
+import ListingMetric from "./components/metrics/ListingMetric.vue";
+import RepostMetric from "./components/metrics/RepostMetric.vue";
+
+export const resultPageState = {
+  state: {
+    activityData: {}
+  },
+  setActivityData: function(data) {
+    this.state.activityData = data;
+  }
+};
 
 export default {
   name: "Results",
   components: {
     ResultSummary,
     ResultList,
-    ActivityMetric
+    ListingMetric,
+    RepostMetric
+  },
+  beforeMount: async function() {
+    const { ID } = this.$route.params;
+
+    const activityData = await this.$http.fetchRetry(
+      `/api/v1/metric?ID=${ID}`,
+      {},
+      // retry if no data is returned
+      data => data === undefined
+    );
+    resultPageState.setActivityData(activityData);
+
+    this.loading = false;
   },
   data() {
     return {
-      searchID: this.$route.params.ID
+      searchID: this.$route.params.ID,
+      loading: true
     };
   }
 };

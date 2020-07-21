@@ -104,12 +104,12 @@ export default {
   methods: {
     formatDate: util.formatDate,
     getResultList: async function(retry) {
-      const { fetch, fetch_retry } = this.$http;
+      const { fetch, fetchRetry } = this.$http;
       let url = `/api/v1/listing?ID=${this.searchID}&Datetime=${this.unixDate}`;
 
       let result;
       if (retry) {
-        result = await fetch_retry(url, {}, data => data.HasNewListings);
+        result = await fetchRetry(url, {}, data => !data.HasNewListings);
       } else {
         result = await fetch(url);
       }
