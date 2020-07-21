@@ -8,10 +8,8 @@ import API from './api.js';
 
 Vue.config.productionTip = false;
 
-console.log("bladerunner:", API);
-
 // aliasing
-Vue.prototype.$http = API;
+Vue.prototype.$http = new API();
 
 new Vue({
   router,
