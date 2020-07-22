@@ -172,6 +172,13 @@ func (m *mockDBClient) getSearchActivity(searchID int) (searchActivity, error) {
 	}, nil
 }
 
+func (m *mockDBClient) getSearchActivityByHour(searchID int) ([]activityByHour, error) {
+	// fake listing data should have average in seconds of 90 min * 60 seconds = 5400
+	return []activityByHour{
+		{Count: 100},
+	}, nil
+}
+
 type mockPollingService struct {
 	listings []craigslist.Listing
 }

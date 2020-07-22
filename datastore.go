@@ -30,6 +30,7 @@ type connection interface {
 	getListingMultiAfter(id int, unixDate int64) ([]clListing, error)
 
 	getSearchActivity(searchID int) (searchActivity, error)
+	getSearchActivityByHour(searchID int) ([]activityByHour, error)
 }
 
 type client struct {
@@ -143,6 +144,13 @@ type searchActivity struct {
 	TotalCount      int
 	RepostCount     int
 	PercentRepost   float32
+}
+
+type activityByHour struct {
+	Label       time.Time
+	TopUnixDate int64
+	BotUnixDate int64
+	Count       int
 }
 
 type clListing struct {
@@ -598,6 +606,80 @@ func (c *client) getSearchActivity(searchID int) (searchActivity, error) {
 		if err != nil {
 			return output, err
 		}
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
+}
+
+func (c *client) getSearchActivityByHour(searchID int) ([]activityByHour, error) {
+	output := []activityByHour{}
+
+	rows, err := c.db.Query(`
+		with total_listings as (
+			select 
+				l.*
+			from listing l
+			left join search s
+			on l.search_id = s.id
+			where s.id = $1
+			order by unix_date desc
+		),
+		
+		max_date as (
+			select 
+				unix_date
+			from total_listings
+			limit 1
+		),
+		
+		cutoff_dates as (
+			select
+				row_number() over (order by tl.unix_date desc) as "rn",
+				case 
+					when tl.unix_date = (select unix_date from max_date)
+					then to_timestamp(tl.unix_date)
+					else to_timestamp((select unix_date from max_date) - ((row_number() over (order by tl.unix_date desc) - 1) * 3600))
+				end "label",
+				case
+					when tl.unix_date = (select unix_date from max_date)
+					then tl.unix_date
+					else (select unix_date from max_date) - ((row_number() over (order by tl.unix_date desc) - 1) * 3600)
+				end "top_unix_date",
+				(select unix_date from max_date) - ((row_number() over (order by tl.unix_date desc)) * 3600) as "bot_unix_date"
+			from total_listings tl
+			join (select search_id, unix_date as "max" from total_listings limit 1) mu on tl.search_id = mu.search_id
+			limit 24
+		)
+		
+		select 
+			cd.*,
+			(select count(*) filter (where tl.unix_date < cd.top_unix_date - 1 and tl.unix_date > cd.bot_unix_date - 1) from total_listings tl)
+		from cutoff_dates cd
+	`, searchID)
+
+	if err != nil {
+		return output, err
+	}
+
+	for rows.Next() {
+		set := activityByHour{}
+
+		err := rows.Scan(
+			&set.Label,
+			&set.TopUnixDate,
+			&set.BotUnixDate,
+			&set.Count,
+		)
+		if err != nil {
+			return output, err
+		}
+
+		output = append(output, set)
 	}
 
 	err = rows.Err()
