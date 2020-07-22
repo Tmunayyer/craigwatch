@@ -632,32 +632,34 @@ func (c *client) getSearchActivityByHour(searchID int) ([]activityByHour, error)
 		
 		max_date as (
 			select 
-				unix_date
+				unix_date as maximum,
+				EXTRACT(EPOCH FROM NOW())::bigint as "now"
 			from total_listings
 			limit 1
 		),
 		
 		cutoff_dates as (
 			select
-				row_number() over (order by tl.unix_date desc) as "rn",
 				case 
-					when tl.unix_date = (select unix_date from max_date)
+					when tl.unix_date = (select "now" from max_date)
 					then to_timestamp(tl.unix_date)
-					else to_timestamp((select unix_date from max_date) - ((row_number() over (order by tl.unix_date desc) - 1) * 3600))
+					else to_timestamp((select "now" from max_date) - ((row_number() over (order by tl.unix_date desc) - 1) * 3600))
 				end "label",
 				case
-					when tl.unix_date = (select unix_date from max_date)
+					when tl.unix_date = (select "now" from max_date)
 					then tl.unix_date
-					else (select unix_date from max_date) - ((row_number() over (order by tl.unix_date desc) - 1) * 3600)
+					else (select "now" from max_date) - ((row_number() over (order by tl.unix_date desc) - 1) * 3600)
 				end "top_unix_date",
-				(select unix_date from max_date) - ((row_number() over (order by tl.unix_date desc)) * 3600) as "bot_unix_date"
+				(select "now" from max_date) - ((row_number() over (order by tl.unix_date desc)) * 3600) as "bot_unix_date"
 			from total_listings tl
 			join (select search_id, unix_date as "max" from total_listings limit 1) mu on tl.search_id = mu.search_id
-			limit 24
+			limit 48
 		)
 		
-		select 
-			cd.*,
+		select
+			cd.label,
+			cd.top_unix_date,
+			cd.bot_unix_date,
 			(select count(*) filter (where tl.unix_date < cd.top_unix_date - 1 and tl.unix_date > cd.bot_unix_date - 1) from total_listings tl)
 		from cutoff_dates cd
 	`, searchID)
