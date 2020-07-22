@@ -7,30 +7,50 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 // a custom plugin so there arent 1000 bundles when working on frontend
 class TinyTidyPlugin {
     constructor(options) {
+        this.path;
+        this.firstRun = true;
+        this.scrubbing = false;
         this.options = options;
     }
 
     apply = (compiler) => {
         if (compiler.options.mode !== "development") return;
+        this.path = compiler.options.output.path;
 
-        const callback = this._doSomething.bind(this, compiler);
-        compiler.hooks.compile.tap('TinyTidyPlugin', callback);
+        compiler.hooks.done.tapAsync("TinyTidyPlugin", this.removeOldFiles);
     };
 
-    _doSomething = function (compiler, details, done) {
-        // remove old bundles according to filename scheme
-        console.log("removing old bundles...");
-        const files = fs.readdirSync(compiler.outputPath);
-        const bundleName = compiler.options.output.filename.split(".");
-        const prefix = bundleName[0];
-
-        for (let i = 0; i < files.length; i++) {
-            if (files[i].startsWith(prefix) && files[i].endsWith('.js')) {
-                fs.unlinkSync(compiler.outputPath + "/" + files[i]);
-            }
+    removeOldFiles = ({ compilation }, done) => {
+        if (this.firstRun) {
+            this.firstRun = false;
+            return done();
         }
 
-        // done();
+        const builtFiles = Object.keys(compilation.assets);
+        this.backgroundScrub(builtFiles);
+        done();
+    };
+
+    backgroundScrub = (builtFiles) => {
+        this.srubbing = true;
+        const existingFiles = fs.readdirSync(this.path);
+
+        let currentBundle;
+        for (let i = 0; i < builtFiles.length; i++) {
+            if (builtFiles[i].startsWith("bundle")) currentBundle = builtFiles[i];
+        }
+
+        for (let i = 0; i < existingFiles.length; i++) {
+            const file = existingFiles[i];
+            if (!file.startsWith("bundle")) continue;
+            if (!file.endsWith("js")) continue;
+
+            if (file === currentBundle) continue;
+
+            fs.unlinkSync(this.path + "/" + file);
+        }
+
+        this.scrubbing = false;
     };
 };
 
