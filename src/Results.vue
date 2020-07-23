@@ -84,7 +84,6 @@ export default {
       {},
       (data) => data.length === 0
     );
-    console.log("the activityChart:", activityChart);
     resultPageState.setActivityChart(activityChart);
 
     this.loading = false;

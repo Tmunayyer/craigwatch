@@ -52,6 +52,7 @@ export default {
         },
         series: [
           {
+            type: "spline",
             data: this.seriesData,
           },
         ],
@@ -73,6 +74,19 @@ export default {
         xAxis: {
           title: {
             text: "hour",
+          },
+          labels: {
+            style: {
+              fontSize: "0.7em",
+            },
+            formatter: (() => {
+              const seriesData = this.seriesData;
+              return function () {
+                const index = this.value;
+                const value = seriesData[index]._label;
+                return seriesData[index]._label;
+              };
+            })(),
           },
         },
         credits: {

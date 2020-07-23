@@ -6,8 +6,11 @@
 </template>
 
 <script>
+import highcharts from "highcharts";
 import SplineChart from "../SplineChart.vue";
 import { resultPageState } from "../../Results.vue";
+
+import util from "../../utility.js";
 
 export default {
   name: "ActivityChart",
@@ -27,10 +30,14 @@ export default {
   },
   methods: {
     transformData() {
-      const formatted = this.sharedState.activityChart.map((point) => {
+      const formatted = this.sharedState.activityChart.map((point, i) => {
+        const date = util.formatDate(point.TopUnixDate * 1000);
+
         return {
+          name: date,
+          x: i,
           y: point.Count,
-          name: point.Label,
+          _label: util.chartDate(date),
         };
       });
       return formatted;
