@@ -226,6 +226,7 @@ func (c *client) getSearch(searchID int) (clSearch, error) {
 		on l.search_id = s.id
 		where s.id = $1
 	`, searchID)
+	defer rows.Close()
 
 	if err != nil {
 		return output, err
@@ -274,6 +275,7 @@ func (c *client) getSearchMulti() ([]clSearch, error) {
 			) l
 		on l.search_id = s.id
 	`)
+	defer rows.Close()
 
 	if err != nil {
 		return output, err
@@ -305,12 +307,13 @@ func (c *client) getSearchMulti() ([]clSearch, error) {
 }
 
 func (c *client) deleteSearch(id int) error {
-	_, err := c.db.Query(`
+	rows, err := c.db.Query(`
 		delete from 
 			search
 		where
 			id = $1
 	`, id)
+	defer rows.Close()
 
 	if err != nil {
 		return err
@@ -388,7 +391,8 @@ func (c *client) saveListingMulti(searchID int, listings []clListing) error {
 
 	statement := insertStatement + valueStatement + conflictStatement
 
-	_, err := c.db.Query(statement, values...)
+	rows, err := c.db.Query(statement, values...)
+	defer rows.Close()
 
 	if err != nil {
 		return err
@@ -398,12 +402,13 @@ func (c *client) saveListingMulti(searchID int, listings []clListing) error {
 }
 
 func (c *client) deleteListingMulti(searchID int) error {
-	_, err := c.db.Query(`
+	rows, err := c.db.Query(`
 		delete from 
 			listing
 		where
 			search_id = $1
 	`, searchID)
+	defer rows.Close()
 
 	if err != nil {
 		return err
@@ -425,6 +430,7 @@ func (c *client) getListingMulti(searchID int) ([]clListing, error) {
 		order by
 			unix_date desc;
 	`, searchID)
+	defer rows.Close()
 
 	if err != nil {
 		return output, err
@@ -481,6 +487,7 @@ func (c *client) getListingMultiAfter(searchID int, unixDate int64) ([]clListing
 		order by
 			unix_date desc;
 	`, searchID, unixDate)
+	defer rows.Close()
 
 	if err != nil {
 		return output, err
@@ -585,6 +592,7 @@ func (c *client) getSearchActivity(searchID int) (searchActivity, error) {
 		from post_frequency as pf
 		full join repost_frequency rpf on pf.search_id = rpf.search_id
 	`, searchID)
+	defer rows.Close()
 
 	if err != nil {
 		return output, err
@@ -663,6 +671,7 @@ func (c *client) getSearchActivityByHour(searchID int) ([]activityByHour, error)
 			(select count(*) filter (where tl.unix_date < cd.top_unix_date - 1 and tl.unix_date > cd.bot_unix_date - 1) from total_listings tl)
 		from cutoff_dates cd
 	`, searchID)
+	defer rows.Close()
 
 	if err != nil {
 		return output, err
