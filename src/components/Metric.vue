@@ -65,17 +65,17 @@ export default {
   props: ["label", "metricname", "data", "defaultSelected", "error"],
   data() {
     return {
-      selected: this.$props.defaultSelected
+      selected: this.$props.defaultSelected,
     };
   },
   computed: {
-    computedLabel: function() {
+    computedLabel: function () {
       if (this.$props.label !== undefined) {
         return this.$props.label;
       } else {
         return "per";
       }
-    }
-  }
+    },
+  },
 };
 </script>
