@@ -38,4 +38,5 @@ func initializeAPI() {
 	http.HandleFunc("/api/v1/search", api.handleSearch)
 	http.HandleFunc("/api/v1/listing", api.handleListing)
 	http.HandleFunc("/api/v1/metric", api.handleMetric)
+	http.HandleFunc("/api/v1/activityChart", api.handleActivityChart)
 }

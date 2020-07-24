@@ -14,36 +14,37 @@ import { resultPageState } from "../../Results.vue";
 export default {
   name: "ListingMetric",
   components: {
-    Metric
+    Metric,
   },
   data() {
     return {
       privateState: {
         data: {},
-        error: false
+        error: false,
       },
-      sharedState: resultPageState.state
+      sharedState: resultPageState.state,
     };
   },
-  beforeMount: function() {
-    this.privateState.data = this.transformData(this.sharedState.activityData);
+  beforeMount: function () {
+    this.privateState = this.setPrivateState();
   },
   methods: {
-    transformData: function(obj) {
+    setPrivateState: function () {
       const displayMap = {
         InSeconds: "seconds",
         InMinutes: "minutes",
-        InHours: "hours"
+        InHours: "hours",
       };
 
       let pairs = {};
-      for (const key in this.sharedState.activityData) {
+      const { data, error } = this.sharedState.activityMetrics;
+      for (const key in data) {
         if (displayMap[key] === undefined) continue;
-        pairs[displayMap[key]] = this.sharedState.activityData[key];
+        pairs[displayMap[key]] = data[key];
       }
 
-      return pairs;
-    }
-  }
+      return { data: pairs, error: error };
+    },
+  },
 };
 </script>

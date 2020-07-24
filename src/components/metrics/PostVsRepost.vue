@@ -15,36 +15,37 @@ import { resultPageState } from "../../Results.vue";
 export default {
   name: "PostVsRepost",
   components: {
-    Metric
+    Metric,
   },
   data() {
     return {
       privateState: {
         data: {},
-        error: false
+        error: false,
       },
-      sharedState: resultPageState.state
+      sharedState: resultPageState.state,
     };
   },
-  beforeMount: function() {
-    this.privateState.data = this.transformData();
+  beforeMount: function () {
+    this.privateState = this.transformData();
   },
   methods: {
-    transformData: function() {
+    transformData: function () {
       const displayMap = {
         TotalCount: "# of posts",
         RepostCount: "# of reposts",
-        PercentRepost: "% reposts"
+        PercentRepost: "% reposts",
       };
 
       let pairs = {};
-      for (const key in this.sharedState.activityData) {
+      const { data, error } = this.sharedState.activityMetrics;
+      for (const key in data) {
         if (displayMap[key] === undefined) continue;
-        pairs[displayMap[key]] = this.sharedState.activityData[key];
+        pairs[displayMap[key]] = data[key];
       }
 
-      return pairs;
-    }
-  }
+      return { data: pairs, error: error };
+    },
+  },
 };
 </script>

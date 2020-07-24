@@ -1,7 +1,9 @@
 package main
 
 import (
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -242,6 +244,63 @@ func TestListingActivity(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, float32(24), activity.InHours)
+
+		err = c.deleteListingMulti(search.ID)
+		assert.NoError(t, err)
+		err = c.deleteSearch(search.ID)
+		assert.NoError(t, err)
+	})
+}
+
+func TestListingActivityByHour(t *testing.T) {
+	c, teardown, err := setupDBTestCase(t)
+	assert.NoError(t, err)
+	defer teardown(t)
+
+	t.Run("should return hourly data", func(t *testing.T) {
+		search, err := c.saveSearch(testSearch)
+		assert.NoError(t, err)
+
+		// need listings within 24 hours
+		recentListings := []clListing{}
+
+		date := time.Now()
+		for i := 0; i < 5; i++ {
+			// 30 minutes ago
+			recentListingDate := date.Add(-30 * time.Minute).UTC()
+			recentListings = append(recentListings, clListing{
+				DataPID:      "123456" + strconv.Itoa(i),
+				DataRepostOf: "987654",
+				UnixDate:     recentListingDate.Unix(),
+				Title:        "testListingNumeroUno",
+				Link:         "www.testing.com",
+				Price:        106,
+				Hood:         "dontbeamenacetosouthcentral",
+			})
+		}
+
+		for i := 0; i < 5; i++ {
+			// 30 minutes ago
+			recentListingDate := date.Add(-90 * time.Minute).UTC()
+			recentListings = append(recentListings, clListing{
+				DataPID:      "654321" + strconv.Itoa(i),
+				DataRepostOf: "987654",
+				UnixDate:     recentListingDate.Unix(),
+				Title:        "testListingNumeroUno",
+				Link:         "www.testing.com",
+				Price:        106,
+				Hood:         "dontbeamenacetosouthcentral",
+			})
+		}
+
+		err = c.saveListingMulti(search.ID, recentListings)
+		assert.NoError(t, err)
+
+		activity, err := c.getSearchActivityByHour(search.ID)
+		assert.NoError(t, err)
+
+		assert.Equal(t, activity[0].Count, 5)
+		assert.Equal(t, activity[1].Count, 5)
 
 		err = c.deleteListingMulti(search.ID)
 		assert.NoError(t, err)
