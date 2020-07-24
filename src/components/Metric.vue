@@ -44,7 +44,7 @@ select {
     <legend>{{metricname}}</legend>
 
     <template v-if="error">
-      <div class="metric">-</div>
+      <div class="metric error">-</div>
     </template>
     <template v-else>
       <div class="measurement">
@@ -62,7 +62,13 @@ select {
 <script>
 export default {
   name: "Metric",
-  props: ["label", "metricname", "data", "defaultSelected", "error"],
+  props: {
+    label: String,
+    metricname: String,
+    data: Object,
+    defaultSelected: String,
+    error: Boolean,
+  },
   data() {
     return {
       selected: this.$props.defaultSelected,
