@@ -98,6 +98,18 @@ export default {
         legend: {
           enabled: false,
         },
+        tooltip: {
+          useHTML: true,
+          formatter: function () {
+            return `
+              <span>
+                <b>Date:</b> ${this.key}
+                <br/>
+                <b>Count:</b> ${this.y}
+              </span>
+            `;
+          },
+        },
       },
     };
   },
