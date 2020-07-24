@@ -37,6 +37,9 @@ export default {
     Chart,
   },
   props: ["seriesData"],
+  beforeMount() {
+    this.chartOptions.yAxis.tickInterval = this.setYAxisRange();
+  },
   data() {
     return {
       chartOptions: {
@@ -44,7 +47,7 @@ export default {
           type: "spline",
           height: (9 / 16) * 100 + "%",
           backgroundColor: "#f3f2f2",
-          marginLeft: 48,
+          marginLeft: 64,
           marginBottom: 38,
         },
         title: {
@@ -97,6 +100,19 @@ export default {
         },
       },
     };
+  },
+  methods: {
+    setYAxisRange() {
+      const { seriesData } = this;
+      let max = 0;
+      seriesData.forEach((elem) => {
+        if (elem.y > max) {
+          max = elem.y;
+        }
+      });
+
+      return Math.round(max / 4);
+    },
   },
 };
 </script>
