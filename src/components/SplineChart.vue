@@ -12,6 +12,7 @@
   max-width: 449px;
 
   padding: 1em;
+  padding-top: unset;
   border-radius: 4px;
 
   display: flex;
@@ -51,7 +52,12 @@ export default {
           marginBottom: 38,
         },
         title: {
-          text: "",
+          text: "Past 48 Hours",
+          floating: false,
+          margin: 10,
+          style: {
+            fontSize: "1.2em",
+          },
         },
         series: [
           {
@@ -77,6 +83,7 @@ export default {
         xAxis: {
           title: {
             text: "hour",
+            x: -30,
           },
           labels: {
             style: {

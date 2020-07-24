@@ -23,12 +23,12 @@
 
 <template>
   <div v-if="!loading" class="page-container">
-    <ActivityChart />
     <ResultSummary v-bind:searchID="searchID" />
     <div class="metric-container">
       <ListingMetric />
       <RepostMetric />
       <PostVsRepost />
+      <ActivityChart />
     </div>
     <br />
     <ResultList v-bind:searchID="searchID" />
