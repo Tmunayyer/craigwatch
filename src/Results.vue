@@ -48,7 +48,10 @@ import ActivityChart from "./components/charts/ActivityChart.vue";
 export const resultPageState = {
   state: {
     activityMetrics: {},
-    activityChart: [],
+    activityChart: {
+      data: [],
+      error: false,
+    },
   },
   setActivityMetrics: function (data) {
     this.state.activityMetrics = data;
@@ -71,20 +74,31 @@ export default {
   beforeMount: async function () {
     const { ID } = this.$route.params;
 
-    const activityMetrics = await this.$http.fetchRetry(
-      `/api/v1/metric?ID=${ID}`,
-      {},
-      // retry if no data is returned
-      (data) => data === undefined
-    );
-    resultPageState.setActivityMetrics(activityMetrics);
+    try {
+      const activityMetrics = await this.$http.fetchRetry(
+        `/api/v1/metric?ID=${ID}`,
+        {},
+        // retry if no data is returned
+        (data) => data === undefined
+      );
+      resultPageState.setActivityMetrics({
+        data: activityMetrics,
+        error: false,
+      });
+    } catch (err) {
+      reusltPageState.setActivityMetrics({ data: {}, error: true });
+    }
 
-    const activityChart = await this.$http.fetchRetry(
-      `/api/v1/activityChart?ID=${ID}`,
-      {},
-      (data) => data.length === 0
-    );
-    resultPageState.setActivityChart(activityChart);
+    try {
+      const activityChart = await this.$http.fetchRetry(
+        `/api/v1/activityChart?ID=${ID}`,
+        {},
+        (data) => data.length === 0
+      );
+      resultPageState.setActivityChart({ data: activityChart, error: false });
+    } catch (err) {
+      resultPageState.setActivityChart({ data: [], error: true });
+    }
 
     this.loading = false;
   },

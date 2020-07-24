@@ -27,7 +27,7 @@ export default {
     };
   },
   beforeMount: function () {
-    this.privateState.data = this.transformData();
+    this.privateState = this.transformData();
   },
   methods: {
     transformData: function () {
@@ -38,12 +38,13 @@ export default {
       };
 
       let pairs = {};
-      for (const key in this.sharedState.activityMetrics) {
+      const { data, error } = this.sharedState.activityMetrics;
+      for (const key in data) {
         if (displayMap[key] === undefined) continue;
-        pairs[displayMap[key]] = this.sharedState.activityMetrics[key];
+        pairs[displayMap[key]] = data[key];
       }
 
-      return pairs;
+      return { data: pairs, error: error };
     },
   },
 };

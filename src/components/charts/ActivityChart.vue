@@ -2,7 +2,7 @@
 </style>
 
 <template>
-  <SplineChart :seriesData="privateState.data" />
+  <SplineChart :seriesData="privateState.data" :error="privateState.error" />
 </template>
 
 <script>
@@ -18,19 +18,21 @@ export default {
     SplineChart,
   },
   beforeMount: function () {
-    this.privateState.data = this.transformData();
+    this.privateState = this.transformData();
   },
   data() {
     return {
       privateState: {
         data: [],
+        error: false,
       },
       sharedState: resultPageState.state,
     };
   },
   methods: {
     transformData() {
-      const formatted = this.sharedState.activityChart.map((point, i) => {
+      const { data, error } = this.sharedState.activityChart;
+      const formatted = data.map((point, i) => {
         const date = util.formatDate(point.TopUnixDate * 1000);
 
         return {
@@ -40,7 +42,7 @@ export default {
           _label: util.chartDate(date),
         };
       });
-      return formatted;
+      return { data: formatted, error: error };
     },
   },
 };

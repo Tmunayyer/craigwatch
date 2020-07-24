@@ -37,7 +37,7 @@ export default {
   components: {
     Chart,
   },
-  props: ["seriesData"],
+  props: ["seriesData", "error"],
   beforeMount() {
     this.chartOptions.yAxis.tickInterval = this.setYAxisRange();
   },
