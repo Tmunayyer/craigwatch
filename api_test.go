@@ -82,10 +82,6 @@ func (m *mockCraigslistClient) GetTimezones(ctx context.Context) (map[string]str
 	return make(map[string]string), nil
 }
 
-func (m *mockCraigslistClient) GetTimezones(ctx context.Context) (map[string]string, error) {
-	return make(map[string]string), nil
-}
-
 type mockDBClient struct {
 	saveSearchCallCount    int
 	saveSearchURLs         map[string]clSearch
