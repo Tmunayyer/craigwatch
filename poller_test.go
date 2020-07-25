@@ -21,10 +21,13 @@ func TestPollingCutoffCalculation(t *testing.T) {
 		location: "newyork",
 		getNewListingsFn: func(ctx context.Context, url string) (*craigslist.Result, error) {
 			if url == badCraigslistURL {
-				return &craigslist.Result{}, fmt.Errorf("invalid url: %v", url)
+				return &craigslist.Result{
+					Done: true,
+				}, fmt.Errorf("invalid url: %v", url)
 			}
 
 			fakeResult := craigslist.Result{
+				Done:     true,
 				Listings: fakeListings,
 			}
 
@@ -40,7 +43,7 @@ func TestPollingCutoffCalculation(t *testing.T) {
 
 	s := clSearch{
 		ID:             99,
-		URL:            "www.testing.com",
+		URL:            "https://newyork.craigslist.org",
 		UnixCutoffDate: 0,
 	}
 
@@ -62,11 +65,13 @@ func TestPollingInterval(t *testing.T) {
 			getNewListingsFnCount++
 
 			fakeResult := craigslist.Result{
+				Done:     true,
 				Listings: []craigslist.Listing{},
 			}
 
 			if getNewListingsFnCount > 4 {
 				fakeResult = craigslist.Result{
+					Done: true,
 					Listings: []craigslist.Listing{
 						{
 							DataPID:      "1",
