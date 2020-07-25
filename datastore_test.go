@@ -9,8 +9,9 @@ import (
 )
 
 var testSearch = clSearch{
-	Name: "test search 99",
-	URL:  "www.TESTING.com",
+	Name:     "test search 99",
+	URL:      "www.TESTING.com",
+	Timezone: "testtimezone",
 }
 
 var testListings = []clListing{
@@ -52,16 +53,14 @@ func TestSaveSearch(t *testing.T) {
 	assert.NoError(t, err)
 	defer teardown(t)
 
-	args := clSearch{
-		Name: "test search 99",
-		URL:  "www.TESTING.com",
-	}
+	args := testSearch
 
 	record, err := c.saveSearch(args)
 	assert.NoError(t, err)
 
 	assert.Equal(t, args.Name, record.Name)
 	assert.Equal(t, args.URL, record.URL)
+	assert.Equal(t, args.Timezone, record.Timezone)
 	assert.False(t, record.Confirmed)
 	assert.Less(t, 0, record.ID)
 
@@ -75,10 +74,7 @@ func TestGetSearch(t *testing.T) {
 	assert.NoError(t, err)
 	defer teardown(t)
 
-	args := clSearch{
-		Name: "test getSearch 0100",
-		URL:  "www.TESTING.com",
-	}
+	args := testSearch
 
 	saved, err := c.saveSearch(args)
 	assert.NoError(t, err)
@@ -99,10 +95,7 @@ func TestGetSearchMulti(t *testing.T) {
 	assert.NoError(t, err)
 	defer teardown(t)
 
-	args := clSearch{
-		Name: "test search 0100",
-		URL:  "www.TESTING.com",
-	}
+	args := testSearch
 
 	saved, err := c.saveSearch(args)
 	assert.NoError(t, err)
@@ -129,10 +122,7 @@ func TestDeleteSearch(t *testing.T) {
 	assert.NoError(t, err)
 	defer teardown(t)
 
-	args := clSearch{
-		Name: "testing 123",
-		URL:  "www.TESTING.com",
-	}
+	args := testSearch
 
 	saved, err := c.saveSearch(args)
 	assert.NoError(t, err)

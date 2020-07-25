@@ -177,7 +177,7 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 		insert into search
 			(name, url, created_on, timezone)
 		values
-			($1, $2, (select extract(epoch from now());), $3)
+			($1, $2, now(), $3)
 		returning *
 	`, data.Name, data.URL, data.Timezone)
 	if err != nil {
@@ -240,9 +240,9 @@ func (c *client) getSearch(searchID int) (clSearch, error) {
 			&output.Name,
 			&output.URL,
 			&output.CreatedOn,
+			&output.Timezone,
 			&output.UnixCutoffDate,
 			&output.TotalListings,
-			&output.Timezone,
 		)
 		if err != nil {
 			return output, err
@@ -291,9 +291,9 @@ func (c *client) getSearchMulti() ([]clSearch, error) {
 			&q.Name,
 			&q.URL,
 			&q.CreatedOn,
+			&q.Timezone,
 			&q.UnixCutoffDate,
 			&q.TotalListings,
-			&q.Timezone,
 		)
 		if err != nil {
 			return output, err
