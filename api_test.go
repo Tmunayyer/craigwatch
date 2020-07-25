@@ -53,6 +53,7 @@ var fakeSearch = clSearch{
 
 type mockCraigslistClient struct {
 	location         string
+	TimezoneMap      map[string]string
 	getNewListingsFn func(ctx context.Context, url string) (*craigslist.Result, error)
 }
 
@@ -61,6 +62,7 @@ func (m *mockCraigslistClient) FormatURL(term string, o craigslist.Options) stri
 }
 
 func (m *mockCraigslistClient) GetListings(ctx context.Context, url string) (*craigslist.Result, error) {
+	fmt.Println("the getListings....")
 	if url == badCraigslistURL {
 		return &craigslist.Result{}, fmt.Errorf("invalid url: %v", url)
 	}
@@ -68,13 +70,16 @@ func (m *mockCraigslistClient) GetListings(ctx context.Context, url string) (*cr
 	fakeResult := craigslist.Result{
 		Listings: fakeListings,
 	}
-
+	fmt.Println("returning the getListings....")
 	return &fakeResult, nil
 
 }
 
 func (m *mockCraigslistClient) GetNewListings(ctx context.Context, url string, date time.Time) (*craigslist.Result, error) {
 	return m.getNewListingsFn(ctx, url)
+}
+func (m *mockCraigslistClient) GetTimezones(ctx context.Context) (map[string]string, error) {
+	return make(map[string]string), nil
 }
 
 func (m *mockCraigslistClient) GetTimezones(ctx context.Context) (map[string]string, error) {
