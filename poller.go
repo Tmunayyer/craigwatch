@@ -83,16 +83,27 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	}
 
 	fmt.Println("polling:", search.ID, search.URL) // intentional
+	rawListings := []craigslist.Listing{}
+
 	result, err := pc.cl.GetNewListings(ctx, search.URL, record.polledAsOf)
 	if err != nil {
 		fmt.Println("err getting listings from fn poll():", err)
+	}
+	rawListings = append(rawListings, result.Listings...)
+
+	for !result.Done {
+		result, err = result.Next(ctx, record.polledAsOf)
+		if err != nil {
+			fmt.Println("err getting listings from fn poll():", err)
+		}
+		rawListings = append(rawListings, result.Listings...)
 	}
 
 	// new cutoff date
 	newCutoff := record.polledAsOf
 	// polling interaval
 	if len(result.Listings) > 0 {
-		listingsToSave, maxUnixDate := pc.processNewListings(result)
+		listingsToSave, maxUnixDate := pc.processNewListings(rawListings)
 
 		fmt.Println("-- id", search.ID, "saving ", len(result.Listings), " new listings...") // intentional
 		err := pc.db.saveListingMulti(search.ID, listingsToSave)
@@ -128,11 +139,11 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	time.AfterFunc(interval, func() { pc.poll(ctx, search) })
 }
 
-func (pc *pollingClient) processNewListings(data *craigslist.Result) ([]clListing, int64) {
+func (pc *pollingClient) processNewListings(data []craigslist.Listing) ([]clListing, int64) {
 	listingsToSave := []clListing{}
 	var maxUnixDate int64
 
-	for _, l := range data.Listings {
+	for _, l := range data {
 		var price int = 0
 		if len(l.Price) > 0 {
 			num, err := strconv.Atoi(l.Price[1:])
