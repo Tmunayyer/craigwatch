@@ -33,13 +33,13 @@ export default {
     transformData() {
       const { data, error } = this.sharedState.activityChart;
       const formatted = data.map((point, i) => {
-        const date = util.formatDate(point.TopUnixDate * 1000);
+        const date = util.chartDate(point.TopUnixDate * 1000);
 
         return {
-          name: date,
+          name: util.formatDate(point.TopUnixDate * 1000),
           x: i,
           y: point.Count,
-          _label: util.chartDate(date),
+          _label: date,
         };
       });
       return { data: formatted, error: error };

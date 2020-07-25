@@ -130,6 +130,7 @@ type clSearch struct {
 	Interval       int
 	CreatedOn      time.Time
 	UnixCutoffDate int64
+	Timezone       string
 	TotalListings  int
 }
 
@@ -173,12 +174,12 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 	output := clSearch{}
 
 	rows, err := c.db.Query(`
-	insert into search
-		(name, url, created_on)
-	values
-		($1, $2, Now())
-	returning *
-	`, data.Name, data.URL)
+		insert into search
+			(name, url, created_on, timezone)
+		values
+			($1, $2, (select extract(epoch from now());), $3)
+		returning *
+	`, data.Name, data.URL, data.Timezone)
 	if err != nil {
 		return output, err
 	}
@@ -190,6 +191,7 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 			&output.Name,
 			&output.URL,
 			&output.CreatedOn,
+			&output.Timezone,
 		)
 		if err != nil {
 			return output, err
@@ -240,6 +242,7 @@ func (c *client) getSearch(searchID int) (clSearch, error) {
 			&output.CreatedOn,
 			&output.UnixCutoffDate,
 			&output.TotalListings,
+			&output.Timezone,
 		)
 		if err != nil {
 			return output, err
@@ -290,6 +293,7 @@ func (c *client) getSearchMulti() ([]clSearch, error) {
 			&q.CreatedOn,
 			&q.UnixCutoffDate,
 			&q.TotalListings,
+			&q.Timezone,
 		)
 		if err != nil {
 			return output, err
@@ -650,7 +654,7 @@ func (c *client) getSearchActivityByHour(searchID int) ([]activityByHour, error)
 			select
 				case 
 					when tl.unix_date = (select "now" from max_date)
-					then to_timestamp(tl.unix_date)
+					then to_timestamp(tl.unix_date) 
 					else to_timestamp((select "now" from max_date) - ((row_number() over (order by tl.unix_date desc) - 1) * 3600))
 				end "label",
 				case
