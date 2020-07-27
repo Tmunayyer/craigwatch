@@ -49,6 +49,7 @@ var fakeSearch = clSearch{
 	Confirmed: false,
 	Interval:  0,
 	CreatedOn: time.Time{},
+	Timezone:  "America/New_York",
 }
 
 type mockCraigslistClient struct {
@@ -62,7 +63,6 @@ func (m *mockCraigslistClient) FormatURL(term string, o craigslist.Options) stri
 }
 
 func (m *mockCraigslistClient) GetListings(ctx context.Context, url string) (*craigslist.Result, error) {
-	fmt.Println("the getListings....")
 	if url == badCraigslistURL {
 		return &craigslist.Result{}, fmt.Errorf("invalid url: %v", url)
 	}
@@ -70,7 +70,6 @@ func (m *mockCraigslistClient) GetListings(ctx context.Context, url string) (*cr
 	fakeResult := craigslist.Result{
 		Listings: fakeListings,
 	}
-	fmt.Println("returning the getListings....")
 	return &fakeResult, nil
 
 }
@@ -148,6 +147,11 @@ func (m *mockDBClient) getListingMulti(id int) ([]clListing, error) {
 }
 func (m *mockDBClient) getListingMultiAfter(id int, date int64) ([]clListing, error) {
 	output := []clListing{}
+	loc, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		panic(err)
+	}
+
 	for _, l := range fakeListings {
 		p, err := strconv.Atoi(l.Price[1:])
 		if err != nil {
@@ -158,7 +162,7 @@ func (m *mockDBClient) getListingMultiAfter(id int, date int64) ([]clListing, er
 			SearchID:     fakeSearch.ID,
 			DataPID:      l.DataPID,
 			DataRepostOf: l.DataRepostOf,
-			UnixDate:     newUnixDate(l.Date),
+			UnixDate:     newUnixDate(l.Date, loc),
 			Title:        l.Title,
 			Link:         l.Link,
 			Price:        p,
@@ -283,10 +287,15 @@ func TestHandleSearch(t *testing.T) {
 			ID        int
 			Name      string
 			URL       string
-			Confirmed bool
+			CreatedOn time.Time
+			Timezone  string
 		}
 
-		b := body{Name: "test monitor 1", URL: "www.anything.com"}
+		b := body{
+			Name: "test monitor 1",
+			URL:  "https://newyork",
+		}
+
 		data, err := json.Marshal(b)
 		assert.NoError(t, err)
 		reader := bytes.NewReader(data)
@@ -304,7 +313,6 @@ func TestHandleSearch(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.Code)
 		assert.Equal(t, b.Name, resBody.Name)
 		assert.Equal(t, b.URL, resBody.URL)
-		assert.Equal(t, false, resBody.Confirmed)
 	})
 
 	t.Run("post - invalid url", func(t *testing.T) {
