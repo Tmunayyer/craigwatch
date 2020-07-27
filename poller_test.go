@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	craigslist "github.com/tmunayyer/go-craigslist"
@@ -41,20 +42,17 @@ func TestPollingCutoffCalculation(t *testing.T) {
 		records: make(map[int]*pollingRecord),
 	}
 
-	s := clSearch{
-		ID:             99,
-		URL:            "https://newyork.craigslist.org",
-		UnixCutoffDate: 0,
-	}
+	tz, err := time.LoadLocation(fakeSearch.Timezone)
+	assert.NoError(t, err)
 
-	mockPoller.poll(context.Background(), s)
+	mockPoller.poll(context.Background(), fakeSearch)
 
-	r, has := mockPoller.records[s.ID]
+	r, has := mockPoller.records[fakeSearch.ID]
 	assert.True(t, has)
 	// - fake listings most recent listing date: 2020-01-02 16:04 and should be the polled as of
 	//   after poll is run
 	// - add 1 to account for adding 1 second in poll
-	assert.Equal(t, newUnixDate(fakeListings[0].Date)+1, r.polledAsOf.Unix())
+	assert.Equal(t, newUnixDate(fakeListings[0].Date, tz)+1, r.polledAsOf)
 }
 
 func TestPollingInterval(t *testing.T) {

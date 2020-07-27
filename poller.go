@@ -17,9 +17,10 @@ type pollingService interface {
 }
 
 type pollingRecord struct {
-	polledAsOf      time.Time
+	polledAsOf      int64
 	pollingInterval int // seconds, default 60
 	emptyPollCount  int // count the time a poll comes back as nothing new to use as input to interval adjustments
+	timezone        *time.Location
 }
 
 type pollingClient struct {
@@ -70,40 +71,58 @@ func (pc *pollingClient) shutdown() error {
 
 func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	pc.mu.Lock()
+	// ===================
+	// INITALIZATION
+	// ===================
 	record, has := pc.records[search.ID]
 	if !has {
 		// this is a new record, set up accordingly
 		record = &pollingRecord{}
 		pc.records[search.ID] = record
 
-		record.polledAsOf = time.Unix(int64(search.UnixCutoffDate), 0)
+		loc, err := time.LoadLocation(search.Timezone)
+		if err != nil {
+			fmt.Printf("error loading location: %+v", err)
+		}
+		record.timezone = loc
+		// 1. on initialization of a new poll, this is 0 so there is no need to apply a timezone to it,
+		//    0 is going to tell the craigslist library to get all possible searches
+		// 2. on initalization of an existing poll (found in DB) the unix cutoff will already
+		//    have the timezone applied
+		record.polledAsOf = search.UnixCutoffDate
 		record.pollingInterval = pc.defaultPollingInterval
 		// set it to 0, if there are listings, its set to 1, if there are none 1 gets added
 		record.emptyPollCount = 0
 	}
 
+	// ===================
+	// GATHERING DATA
+	// ===================
 	fmt.Println("polling:", search.ID, search.URL) // intentional
 	rawListings := []craigslist.Listing{}
-
-	result, err := pc.cl.GetNewListings(ctx, search.URL, record.polledAsOf)
+	date := time.Unix(record.polledAsOf, 0)
+	result, err := pc.cl.GetNewListings(ctx, search.URL, date)
 	if err != nil {
 		fmt.Println("err getting listings from fn poll():", err)
 	}
 	rawListings = append(rawListings, result.Listings...)
 
 	for !result.Done {
-		result, err = result.Next(ctx, record.polledAsOf)
+		result, err = result.Next(ctx, date)
 		if err != nil {
 			fmt.Println("err getting listings from fn poll():", err)
 		}
 		rawListings = append(rawListings, result.Listings...)
 	}
 
+	// ===================
+	// PROCESSING DATA
+	// ===================
 	// new cutoff date
 	newCutoff := record.polledAsOf
 	// polling interaval
 	if len(result.Listings) > 0 {
-		listingsToSave, maxUnixDate := pc.processNewListings(rawListings)
+		listingsToSave, maxUnixDate := pc.processNewListings(rawListings, record.timezone)
 
 		fmt.Println("-- id", search.ID, "saving ", len(result.Listings), " new listings...") // intentional
 		err := pc.db.saveListingMulti(search.ID, listingsToSave)
@@ -111,7 +130,8 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 			fmt.Println("err saving listings:", err)
 		}
 
-		newCutoff = pc.calculateCutoff(maxUnixDate)
+		// add 1 second to the max to avoid duplication, craigslist lib is inclusive
+		newCutoff = maxUnixDate + 1
 
 		// calculate polling interval
 		activity, err := pc.db.getSearchActivity(search.ID)
@@ -139,7 +159,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	time.AfterFunc(interval, func() { pc.poll(ctx, search) })
 }
 
-func (pc *pollingClient) processNewListings(data []craigslist.Listing) ([]clListing, int64) {
+func (pc *pollingClient) processNewListings(data []craigslist.Listing, tz *time.Location) ([]clListing, int64) {
 	listingsToSave := []clListing{}
 	var maxUnixDate int64
 
@@ -153,7 +173,7 @@ func (pc *pollingClient) processNewListings(data []craigslist.Listing) ([]clList
 			price = num
 		}
 
-		unixDate := newUnixDate(l.Date)
+		unixDate := newUnixDate(l.Date, tz)
 		if unixDate > maxUnixDate {
 			maxUnixDate = unixDate
 		}
@@ -170,19 +190,4 @@ func (pc *pollingClient) processNewListings(data []craigslist.Listing) ([]clList
 	}
 
 	return listingsToSave, maxUnixDate
-}
-
-func (pc *pollingClient) calculateCutoff(maxUnixDate int64) time.Time {
-	newCutoff := time.Unix(maxUnixDate, 0).UTC()
-	layout := "2006-01-02 15:04"
-	newCutoff, err := time.Parse(layout, newCutoff.String()[:16])
-	if err != nil {
-		fmt.Println("err parsing cutoff time", err)
-	}
-
-	// there is a bug from GetNewListings that is returning
-	// a date equal to the currentCutoff, until its fixes, this
-	// should be a decent hack. Issue is opened on github
-	newCutoff = newCutoff.Add(1 * time.Second)
-	return newCutoff
 }
