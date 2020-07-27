@@ -18,7 +18,7 @@ var testListings = []clListing{
 	{
 		DataPID:      "123456",
 		DataRepostOf: "987654",
-		UnixDate:     newUnixDate("2020-01-02 12:00"),
+		UnixDate:     newUnixDate("2020-01-02 12:00", nil),
 		Title:        "testListingNumeroUno",
 		Link:         "www.testing.com",
 		Price:        106,
@@ -27,7 +27,7 @@ var testListings = []clListing{
 	{
 		DataPID:      "654321",
 		DataRepostOf: "123498",
-		UnixDate:     newUnixDate("2020-01-01 12:00"),
+		UnixDate:     newUnixDate("2020-01-01 12:00", nil),
 		Title:        "testListingNumeroDOS",
 		Link:         "www.testing.com",
 		Price:        999,
@@ -201,7 +201,7 @@ func TestGetListingMulti(t *testing.T) {
 		err = c.saveListingMulti(search.ID, testListings)
 		assert.NoError(t, err)
 
-		unixTime := newUnixDate("2020-01-01 12:00")
+		unixTime := newUnixDate("2020-01-01 12:00", nil)
 
 		savedListings, err := c.getListingMultiAfter(search.ID, unixTime)
 		assert.NoError(t, err)
