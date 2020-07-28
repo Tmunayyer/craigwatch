@@ -25,7 +25,7 @@ var fakeListings = []craigslist.Listing{
 	{
 		DataPID:      "1",
 		DataRepostOf: "",
-		Date:         "2020-01-02 16:04",
+		Date:         "2020-01-02 16:04:00",
 		Title:        "Bananas, organic, not eaten",
 		Link:         "www.craigslist.com/bananapost",
 		Price:        "$100",
@@ -34,7 +34,7 @@ var fakeListings = []craigslist.Listing{
 	{
 		DataPID:      "2",
 		DataRepostOf: "",
-		Date:         "2020-01-02 13:04",
+		Date:         "2020-01-02 13:04:00",
 		Title:        "The best crackers ever",
 		Link:         "www.craigslist.com/crackers",
 		Price:        "$20",

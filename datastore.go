@@ -184,7 +184,6 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 	if err != nil {
 		return output, err
 	}
-	fmt.Println("the rows:", rows)
 	defer rows.Close()
 
 	for rows.Next() {
