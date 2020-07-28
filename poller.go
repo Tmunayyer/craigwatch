@@ -122,9 +122,10 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	newCutoff := record.polledAsOf
 	// polling interaval
 	if len(result.Listings) > 0 {
+		// process new listings also deduplicates data
 		listingsToSave, maxUnixDate := pc.processNewListings(rawListings, record.timezone)
 
-		fmt.Println("-- id", search.ID, "saving ", len(result.Listings), " new listings...") // intentional
+		fmt.Println("-- id", search.ID, "saving ", len(listingsToSave), " new listings...") // intentional
 		err := pc.db.saveListingMulti(search.ID, listingsToSave)
 		if err != nil {
 			fmt.Println("err saving listings:", err)
@@ -155,7 +156,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 
 	pc.mu.Unlock()
 	interval := time.Duration(record.pollingInterval*record.emptyPollCount) * time.Second
-	fmt.Println("-- id", search.ID, "polling again in", interval, "seconds")
+	fmt.Println("-- id", search.ID, "polling again in", interval, "seconds") // intentional
 	time.AfterFunc(interval, func() { pc.poll(ctx, search) })
 }
 
@@ -189,5 +190,32 @@ func (pc *pollingClient) processNewListings(data []craigslist.Listing, tz *time.
 		})
 	}
 
+	listingsToSave = pc.deduplicateData(listingsToSave)
+
 	return listingsToSave, maxUnixDate
+}
+
+func (pc *pollingClient) deduplicateData(data []clListing) []clListing {
+	// DataPID = clListing{}
+	knownValues := make(map[string]clListing)
+
+	for _, l := range data {
+		record, has := knownValues[l.DataPID]
+		if !has {
+			knownValues[l.DataPID] = l
+			continue
+		}
+
+		// use most recent listing
+		if l.UnixDate > record.UnixDate {
+			knownValues[l.DataPID] = l
+		}
+	}
+
+	output := []clListing{}
+	for _, v := range knownValues {
+		output = append(output, v)
+	}
+
+	return output
 }

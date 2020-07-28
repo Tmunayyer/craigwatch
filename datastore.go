@@ -173,16 +173,18 @@ type clListing struct {
 func (c *client) saveSearch(data clSearch) (clSearch, error) {
 	output := clSearch{}
 
-	rows, err := c.db.Query(`
+	stmt := `
 		insert into search
 			(name, url, created_on, timezone)
 		values
 			($1, $2, now(), $3)
 		returning *
-	`, data.Name, data.URL, data.Timezone)
+	`
+	rows, err := c.db.Query(stmt, data.Name, data.URL, data.Timezone)
 	if err != nil {
 		return output, err
 	}
+	fmt.Println("the rows:", rows)
 	defer rows.Close()
 
 	for rows.Next() {
@@ -209,7 +211,7 @@ func (c *client) saveSearch(data clSearch) (clSearch, error) {
 func (c *client) getSearch(searchID int) (clSearch, error) {
 	output := clSearch{}
 
-	rows, err := c.db.Query(`
+	stmt := `
 		select
 			s.*,
 			coalesce(l.unix_cutoff_date, '0'),
@@ -227,12 +229,12 @@ func (c *client) getSearch(searchID int) (clSearch, error) {
 			) l
 		on l.search_id = s.id
 		where s.id = $1
-	`, searchID)
-	defer rows.Close()
-
+	`
+	rows, err := c.db.Query(stmt, searchID)
 	if err != nil {
 		return output, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		err := rows.Scan(
@@ -260,7 +262,7 @@ func (c *client) getSearch(searchID int) (clSearch, error) {
 func (c *client) getSearchMulti() ([]clSearch, error) {
 	output := []clSearch{}
 
-	rows, err := c.db.Query(`
+	stmt := `
 		select
 			s.*,
 			coalesce(l.unix_cutoff_date, '0'),
@@ -277,12 +279,12 @@ func (c *client) getSearchMulti() ([]clSearch, error) {
 				group by search_id
 			) l
 		on l.search_id = s.id
-	`)
-	defer rows.Close()
-
+	`
+	rows, err := c.db.Query(stmt)
 	if err != nil {
 		return output, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		q := clSearch{}
@@ -311,17 +313,17 @@ func (c *client) getSearchMulti() ([]clSearch, error) {
 }
 
 func (c *client) deleteSearch(id int) error {
-	rows, err := c.db.Query(`
+	stmt := `
 		delete from 
 			search
 		where
 			id = $1
-	`, id)
-	defer rows.Close()
-
+	`
+	rows, err := c.db.Query(stmt, id)
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
 	return nil
 }
@@ -396,11 +398,10 @@ func (c *client) saveListingMulti(searchID int, listings []clListing) error {
 	statement := insertStatement + valueStatement + conflictStatement
 
 	rows, err := c.db.Query(statement, values...)
-	defer rows.Close()
-
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
 	return nil
 }
