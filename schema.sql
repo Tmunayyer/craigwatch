@@ -2,7 +2,8 @@ create table if not exists search (
 	id serial primary key,
     "name" text,
     "url" text unique not null,
-    created_on  timestamptz
+    created_on  timestamptz,
+    timezone text not null
 );
 
 create table if not exists listing (

@@ -172,15 +172,16 @@ func (s *apiService) handleSearch(w http.ResponseWriter, req *http.Request) {
 		}
 
 		// validate the url before we put it in the DB
-		_, err = s.cl.GetListings(req.Context(), body.URL)
+		result, err := s.cl.GetListings(req.Context(), body.URL)
 		if err != nil {
 			apiErrorHandler(w, http.StatusBadRequest, "handleMonitor", "url provided is not a compatible with craigslist", err)
 			return
 		}
 
 		record, err := s.db.saveSearch(clSearch{
-			Name: body.Name,
-			URL:  body.URL,
+			Name:     body.Name,
+			URL:      body.URL,
+			Timezone: result.Timezone,
 		})
 		if err != nil {
 			if err.Error() == duplicateURLErrorMessage {
