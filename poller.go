@@ -89,7 +89,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		//    0 is going to tell the craigslist library to get all possible searches
 		// 2. on initalization of an existing poll (found in DB) the unix cutoff will already
 		//    have the timezone applied
-		record.polledAsOf = search.UnixCutoffDate
+		record.polledAsOf = search.UnixCutoffDate + 1
 		record.pollingInterval = pc.defaultPollingInterval
 		// set it to 0, if there are listings, its set to 1, if there are none 1 gets added
 		record.emptyPollCount = 0
@@ -100,15 +100,15 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	// ===================
 	fmt.Println("polling:", search.ID, search.URL) // intentional
 	rawListings := []craigslist.Listing{}
-	date := time.Unix(record.polledAsOf, 0)
-	result, err := pc.cl.GetNewListings(ctx, search.URL, date)
+	cutoff := unixToLocal(record.polledAsOf, record.timezone)
+	result, err := pc.cl.GetNewListings(ctx, search.URL, cutoff)
 	if err != nil {
 		fmt.Println("err getting listings from fn poll():", err)
 	}
 	rawListings = append(rawListings, result.Listings...)
 
 	for !result.Done {
-		result, err = result.Next(ctx, date)
+		result, err = result.Next(ctx, cutoff)
 		if err != nil {
 			fmt.Println("err getting listings from fn poll():", err)
 		}
@@ -121,7 +121,7 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 	// new cutoff date
 	newCutoff := record.polledAsOf
 	// polling interaval
-	if len(result.Listings) > 0 {
+	if len(rawListings) > 0 {
 		// process new listings also deduplicates data
 		listingsToSave, maxUnixDate := pc.processNewListings(rawListings, record.timezone)
 
@@ -130,7 +130,6 @@ func (pc *pollingClient) poll(ctx context.Context, search clSearch) {
 		if err != nil {
 			fmt.Println("err saving listings:", err)
 		}
-
 		// add 1 second to the max to avoid duplication, craigslist lib is inclusive
 		newCutoff = maxUnixDate + 1
 
