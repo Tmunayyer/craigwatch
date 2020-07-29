@@ -107,8 +107,8 @@
           <ListingMetric />
           <RepostMetric />
           <PostVsRepost />
-          <ActivityChart />
         </div>
+        <ActivityChart />
       </div>
       <div class="column post-left">
         <br />
