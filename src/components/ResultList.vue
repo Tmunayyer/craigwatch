@@ -75,7 +75,7 @@ import util from "../utility.js";
 export default {
   name: "ResultList",
   components: {
-    Error
+    Error,
   },
   props: ["searchID"],
   data() {
@@ -84,32 +84,37 @@ export default {
       error: false,
       // UnixTimestamp is the cutoff to use when requesting only new listings, should be 0 on load
       unixDate: 0,
-      polling: null
+      polling: null,
     };
   },
-  beforeMount: async function() {
+  beforeMount: async function () {
     try {
       const initResultList = await this.getResultList(true);
       this.resultList = initResultList;
+
+      if (this.resultList.length) {
+        this.unixDate = this.resultList[0].UnixDate;
+      }
     } catch (err) {
       this.error = true;
     }
   },
-  mounted: function() {
+  mounted: function () {
     this.startPolling();
   },
-  beforeDestroy: function() {
+  beforeDestroy: function () {
     this.stopPolling();
   },
   methods: {
     formatDate: util.formatDate,
-    getResultList: async function(retry) {
+    getResultList: async function (retry) {
       const { fetch, fetchRetry } = this.$http;
+
       let url = `/api/v1/listing?ID=${this.searchID}&Datetime=${this.unixDate}`;
 
       let result;
       if (retry) {
-        result = await fetchRetry(url, {}, data => !data.HasNewListings);
+        result = await fetchRetry(url, {}, (data) => !data.HasNewListings);
       } else {
         result = await fetch(url);
       }
@@ -120,25 +125,23 @@ export default {
         return [];
       }
     },
-    startPolling: function() {
+    startPolling: function () {
       // update list every 60 seconds
       this.polling = setInterval(async () => {
         // let these go without setting error
         const updatedResultList = await this.getResultList();
 
-        if (updatedResultList.HasNewListings) {
-          this.unixDate = updatedResultList.Listings[0].UnixDate;
-          this.resultList = updatedResultList.Listings.concat(
-            resultList.Listings
-          );
+        if (updatedResultList.length) {
+          this.unixDate = updatedResultList[0].UnixDate;
+          this.resultList = updatedResultList.concat(this.resultList);
         }
       }, 60000);
     },
-    stopPolling: function() {
+    stopPolling: function () {
       // the next two lined must always be grouped together
       clearInterval(this.polling);
       this.polling = null;
-    }
-  }
+    },
+  },
 };
 </script>
