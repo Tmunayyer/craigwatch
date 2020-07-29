@@ -16,10 +16,6 @@
   margin-bottom: 0.5em;
 }
 
-.listitem-header {
-  height: 2em;
-}
-
 .listitem-title {
   font-size: 1em;
   font-weight: bold;
@@ -51,7 +47,7 @@
     <ul>
       <li v-for="(listing) in resultListPreview" v-bind:key="listing.URL">
         <div class="result-listitem">
-          <div class="listitem-header">
+          <div>
             <div class="listitem-title">{{ listing.Title }}</div>
             <div class="listitem-date">{{ formatDate(listing.UnixDate*1000) }}</div>
           </div>

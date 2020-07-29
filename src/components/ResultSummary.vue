@@ -32,6 +32,13 @@
   font-size: 0.8em;
 }
 
+.detail {
+  font-size: 0.9em;
+  padding: 0.2em 0.2em 0.2em 0.2em;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 @media screen and (max-width: 450px) {
   .result-header {
     width: 100%;
@@ -44,6 +51,11 @@
     <legend>results for</legend>
     <Error v-if="error" />
     <div class="result-header-name">{{ searchDetails.Name }}</div>
+
+    <div class="detail">search region: {{searchDetails.Timezone}}</div>
+    <div class="detail">monitored since: {{formatDate(searchDetails.CreatedOn)}}</div>
+    <div class="detail">total listings: {{searchDetails.TotalListings}}</div>
+
     <a
       class="result-header-url"
       v-bind:href="searchDetails.URL"
@@ -54,6 +66,7 @@
 
 <script>
 import Error from "./Error.vue";
+import util from "../utility.js";
 export default {
   name: "ResultSummary",
   components: {
@@ -69,12 +82,14 @@ export default {
   beforeMount: async function () {
     try {
       let initDetails = await this.getSearchDetails();
+      console.log("the initDetails:", initDetails);
       this.searchDetails = initDetails;
     } catch (err) {
       this.error = true;
     }
   },
   methods: {
+    formatDate: util.formatDate,
     getSearchDetails: async function () {
       const details = await this.$http.fetch(
         `/api/v1/search?ID=${this.$props.searchID}`
