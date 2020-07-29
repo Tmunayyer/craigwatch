@@ -1,6 +1,7 @@
-<style module>
+<style scoped>
 .result-list {
   padding: 0.2em 0.2em 0.2em 0.2em;
+  margin-bottom: 2em;
 
   box-sizing: border-box;
   width: 100%;
@@ -38,13 +39,17 @@
 .price {
   font-weight: bold;
 }
+
+.button {
+  float: right;
+}
 </style>
 
 <template>
   <div class="result-list">
     <Error v-if="error" />
     <ul>
-      <li v-for="(listing) in resultList" v-bind:key="listing.URL">
+      <li v-for="(listing) in resultListPreview" v-bind:key="listing.URL">
         <div class="result-listitem">
           <div class="listitem-header">
             <div class="listitem-title">{{ listing.Title }}</div>
@@ -63,6 +68,7 @@
         </div>
       </li>
     </ul>
+    <button v-on:click="showMore">show more</button>
   </div>
 </template>
 
@@ -80,17 +86,22 @@ export default {
   props: ["searchID"],
   data() {
     return {
+      resultListPreview: [],
       resultList: [],
       error: false,
       // UnixTimestamp is the cutoff to use when requesting only new listings, should be 0 on load
       unixDate: 0,
       polling: null,
+
+      // variable to track page size
+      pageSize: 15,
     };
   },
   beforeMount: async function () {
     try {
       const initResultList = await this.getResultList(true);
       this.resultList = initResultList;
+      this.resultListPreview = initResultList.slice(0, this.pageSize);
 
       if (this.resultList.length) {
         this.unixDate = this.resultList[0].UnixDate;
@@ -134,6 +145,9 @@ export default {
         if (updatedResultList.length) {
           this.unixDate = updatedResultList[0].UnixDate;
           this.resultList = updatedResultList.concat(this.resultList);
+          this.resultListPreview = updatedResultList.concat(
+            this.resultListPreview
+          );
         }
       }, 60000);
     },
@@ -141,6 +155,11 @@ export default {
       // the next two lined must always be grouped together
       clearInterval(this.polling);
       this.polling = null;
+    },
+    showMore: function () {
+      const newPageSize = this.resultListPreview.length + 15;
+
+      this.resultListPreview = this.resultList.slice(0, newPageSize);
     },
   },
 };
