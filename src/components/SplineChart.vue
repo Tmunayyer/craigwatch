@@ -55,7 +55,7 @@ export default {
           marginBottom: 38,
         },
         title: {
-          text: "Past 48 Hours",
+          text: "past 48 hours",
           floating: false,
           margin: 10,
           style: {
@@ -88,6 +88,7 @@ export default {
             text: "hour",
             x: -30,
           },
+          reversed: true,
           labels: {
             style: {
               fontSize: "0.7em",
