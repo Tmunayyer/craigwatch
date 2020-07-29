@@ -10,9 +10,6 @@
 
   justify-content: space-between;
   flex-wrap: wrap;
-
-  width: 450px;
-  max-width: 450px;
 }
 
 /* 
@@ -25,6 +22,10 @@
  */
 
 @media screen and (min-width: 902px) {
+  .metric-container {
+    margin: 0 auto;
+  }
+
   /* 
     Set up a container that will space evenly. Columns will then be given
     a 50% width so no more than 2 items will show up on a given column.
@@ -68,6 +69,9 @@
 @media screen and (max-width: 901px) {
   .metric-container {
     width: 100%;
+
+    width: 450px;
+    max-width: 450px;
   }
 
   .column-container {

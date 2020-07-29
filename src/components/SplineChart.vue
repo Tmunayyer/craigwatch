@@ -9,7 +9,6 @@
   border: 1px solid #a7a7a7;
 
   width: 100%;
-  max-width: 449px;
 
   padding: 1em;
   padding-top: unset;
