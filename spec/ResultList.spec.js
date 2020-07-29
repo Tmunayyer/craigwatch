@@ -87,27 +87,27 @@ describe("list rendering", () => {
         expect(data.unixDate).toBe(1594056360);
     });
 
-    // it("should correctly manage the interval", async () => {
-    //     const list = mount(ResultList, {
-    //         mocks: {
-    //             $http: new mocker.api({
-    //                 shouldFail: false,
-    //                 data: fakeListings
-    //             })
-    //         }
-    //     });
+    it("should correctly manage the interval", async () => {
+        const list = mount(ResultList, {
+            mocks: {
+                $http: new mocker.api({
+                    shouldFail: false,
+                    data: fakeListings
+                })
+            }
+        });
 
-    //     // required to await when mounting inside a test
-    //     await list.vm.$nextTick();
-    //     expect(list.exists());
-    //     expect(list.vm.$data.resultList.length).toBe(2);
+        // required to await when mounting inside a test
+        await list.vm.$nextTick();
+        expect(list.exists());
+        expect(list.vm.$data.resultList.length).toBe(2);
 
-    //     // hold a referene to the polling obj
-    //     const data = list.vm.$data;
-    //     expect(data.polling).not.toBe(null);
+        // hold a referene to the polling obj
+        const data = list.vm.$data;
+        expect(data.polling).not.toBe(null);
 
-    //     list.destroy();
-    //     expect(list.exists()).toBe(false);
-    //     expect(data.polling).toBe(null);
-    // });
+        list.destroy();
+        expect(list.exists()).toBe(false);
+        expect(data.polling).toBe(null);
+    });
 });
