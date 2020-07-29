@@ -55,6 +55,8 @@
     padding-left: 1em;
     width: 45%;
     height: 0px;
+    position: sticky;
+    top: 15px;
   }
 
   .column.post-left {
