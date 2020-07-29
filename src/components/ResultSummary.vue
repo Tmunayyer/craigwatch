@@ -1,4 +1,4 @@
-<style module>
+<style scoped>
 .result-header {
   margin-bottom: 1em;
   overflow: hidden;
@@ -8,6 +8,7 @@
   background-color: #f3f2f2;
   border: 1px solid #a7a7a7;
 
+  height: fit-content;
   width: 100%;
   max-width: 450px;
 
@@ -56,16 +57,16 @@ import Error from "./Error.vue";
 export default {
   name: "ResultSummary",
   components: {
-    Error
+    Error,
   },
   props: ["searchID"],
   data() {
     return {
       searchDetails: {},
-      error: false
+      error: false,
     };
   },
-  beforeMount: async function() {
+  beforeMount: async function () {
     try {
       let initDetails = await this.getSearchDetails();
       this.searchDetails = initDetails;
@@ -74,13 +75,13 @@ export default {
     }
   },
   methods: {
-    getSearchDetails: async function() {
+    getSearchDetails: async function () {
       const details = await this.$http.fetch(
         `/api/v1/search?ID=${this.$props.searchID}`
       );
 
       return details;
-    }
-  }
+    },
+  },
 };
 </script>
