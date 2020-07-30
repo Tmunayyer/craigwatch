@@ -298,3 +298,60 @@ func TestListingActivityByHour(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
+
+func TestPriceDistribution(t *testing.T) {
+	c, teardown, err := setupDBTestCase(t)
+	assert.NoError(t, err)
+	defer teardown(t)
+
+	t.Run("should return distribution data", func(t *testing.T) {
+		search, err := c.saveSearch(testSearch)
+		assert.NoError(t, err)
+
+		// need listings within 24 hours
+		recentListings := []clListing{}
+
+		date := time.Now()
+		for i := 0; i < 5; i++ {
+			// 30 minutes ago
+			recentListingDate := date.Add(-30 * time.Minute).UTC()
+			recentListings = append(recentListings, clListing{
+				DataPID:      "123456" + strconv.Itoa(i),
+				DataRepostOf: "987654",
+				UnixDate:     recentListingDate.Unix(),
+				Title:        "testListingNumeroUno",
+				Link:         "www.testing.com",
+				Price:        57 + 3*i, // total = 315
+				Hood:         "dontbeamenacetosouthcentral",
+			})
+		}
+
+		for i := 0; i < 5; i++ {
+			// 30 minutes ago
+			recentListingDate := date.Add(-90 * time.Minute).UTC()
+			recentListings = append(recentListings, clListing{
+				DataPID:      "654321" + strconv.Itoa(i),
+				DataRepostOf: "987654",
+				UnixDate:     recentListingDate.Unix(),
+				Title:        "testListingNumeroUno",
+				Link:         "www.testing.com",
+				Price:        120 + 9*i, // total = 690
+				Hood:         "dontbeamenacetosouthcentral",
+			})
+		}
+
+		err = c.saveListingMulti(search.ID, recentListings)
+		assert.NoError(t, err)
+
+		distribution, err := c.getPriceDistribution(search.ID)
+		assert.NoError(t, err)
+
+		// 315
+		assert.Equal(t, distribution.AveragePrice, 1005/10+1)
+
+		err = c.deleteListingMulti(search.ID)
+		assert.NoError(t, err)
+		err = c.deleteSearch(search.ID)
+		assert.NoError(t, err)
+	})
+}

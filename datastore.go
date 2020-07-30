@@ -157,9 +157,9 @@ type activityByHour struct {
 }
 
 type priceDistribution struct {
-	AveragePrice float32
+	AveragePrice int
 	SampleSize   int
-	DataSet      []float32
+	DataSet      []uint8
 }
 
 type clListing struct {
@@ -741,9 +741,9 @@ func (c *client) getPriceDistribution(searchID int) (priceDistribution, error) {
 		)
 		
 		select
-			avg(price::numeric) as avg_price,
-			(select count(*) from filtered_set where rand_val < .2) as sample_size,
-			(select array_agg(price::numeric) from filtered_set where rand_val < .2) as data_set
+			avg(price::numeric)::integer as avg_price,
+			(select count(*) from filtered_set where rand_val < .2)::integer as sample_size,
+			(select array_agg(price::integer) from filtered_set where rand_val < .2) as data_set
 		from filtered_set
 	`, searchID)
 	defer rows.Close()
