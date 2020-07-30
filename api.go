@@ -302,3 +302,49 @@ func (s *apiService) handleActivityChart(w http.ResponseWriter, req *http.Reques
 	//=================
 	apiErrorHandler(w, http.StatusNotImplemented, "handleActivityChart", "method not supported: "+req.Method, nil)
 }
+
+func (s *apiService) handlePriceDistribution(w http.ResponseWriter, req *http.Request) {
+	//=========
+	//== GET ==
+	//=========
+	if req.Method == http.MethodGet {
+		queryValues := req.URL.Query()
+		qValID, has := queryValues["ID"]
+		if !has {
+			apiErrorHandler(w, http.StatusBadRequest, "handlePriceDistribution", "invalid ID sent", nil)
+			return
+		}
+
+		searchID, err := strconv.Atoi(qValID[0])
+		if err != nil {
+			apiErrorHandler(w, http.StatusBadRequest, "handlePriceDistribution", "invalid ID sent", err)
+			return
+		}
+
+		search, err := s.db.getSearch(searchID)
+		if err != nil {
+			apiErrorHandler(w, http.StatusInternalServerError, "handlePriceDistribution", "no search with that ID found", err)
+			return
+		}
+
+		distribution, err := s.db.getPriceDistribution(search.ID)
+		if err != nil {
+			apiErrorHandler(w, http.StatusInternalServerError, "handlePriceDistribution", "unable to calculate activity", err)
+			return
+		}
+
+		data, err := json.Marshal(distribution)
+		if err != nil {
+			apiErrorHandler(w, http.StatusInternalServerError, "handlePriceDistribution", "unable to marshal data", err)
+			return
+		}
+
+		w.Write(data)
+		return
+	}
+
+	//=================
+	//== UNSUPPORTED ==
+	//=================
+	apiErrorHandler(w, http.StatusNotImplemented, "handlePriceDistribution", "method not supported: "+req.Method, nil)
+}

@@ -31,6 +31,8 @@ type connection interface {
 
 	getSearchActivity(searchID int) (searchActivity, error)
 	getSearchActivityByHour(searchID int) ([]activityByHour, error)
+
+	getPriceDistribution(searchID int) (priceDistribution, error)
 }
 
 type client struct {
@@ -152,6 +154,12 @@ type activityByHour struct {
 	TopUnixDate int64
 	BotUnixDate int64
 	Count       int
+}
+
+type priceDistribution struct {
+	AveragePrice float32
+	SampleSize   int
+	DataSet      []float32
 }
 
 type clListing struct {
@@ -695,6 +703,64 @@ func (c *client) getSearchActivityByHour(searchID int) ([]activityByHour, error)
 		}
 
 		output = append(output, set)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return output, err
+	}
+
+	return output, nil
+}
+
+func (c *client) getPriceDistribution(searchID int) (priceDistribution, error) {
+	output := priceDistribution{}
+
+	rows, err := c.db.Query(`
+		with total_listings as (
+			select 
+				random() as rand_val,
+				l.*
+			from listing l
+			left join search s
+			on l.search_id = s.id
+			where s.id = $1
+			order by price::numeric desc
+		),
+		
+		median_calc as (
+			SELECT median(price::numeric) AS median_value FROM total_listings
+		),
+		
+		filtered_set as (
+			select
+				*
+			from total_listings
+			where price::numeric > ((select * from median_calc) * .1)
+			and price::numeric < ((select * from median_calc) * 10)
+		)
+		
+		select
+			avg(price::numeric) as avg_price,
+			(select count(*) from filtered_set where rand_val < .2) as sample_size,
+			(select array_agg(price::numeric) from filtered_set where rand_val < .2) as data_set
+		from filtered_set
+	`, searchID)
+	defer rows.Close()
+
+	if err != nil {
+		return output, err
+	}
+
+	for rows.Next() {
+		err := rows.Scan(
+			&output.AveragePrice,
+			&output.SampleSize,
+			&output.DataSet,
+		)
+		if err != nil {
+			return output, err
+		}
 	}
 
 	err = rows.Err()

@@ -188,6 +188,10 @@ func (m *mockDBClient) getSearchActivityByHour(searchID int) ([]activityByHour, 
 	}, nil
 }
 
+func (m *mockDBClient) getPriceDistribution(searchID int) (priceDistribution, error) {
+	return priceDistribution{}, nil
+}
+
 type mockPollingService struct {
 	listings []craigslist.Listing
 }
