@@ -32,7 +32,7 @@ $$
 $$
 language 'sql' immutable;
 
-create aggregate median(numeric) (
+create or replace aggregate median(numeric) (
   sfunc=array_append,
   stype=numeric[],
   finalfunc=_final_median,
