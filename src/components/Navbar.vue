@@ -7,6 +7,7 @@
   align-content: flex-start;
   padding-top: 5px;
   padding-bottom: 5px;
+  height: 42px;
   width: 100%;
 }
 
@@ -58,7 +59,7 @@ import Spinner from "./Spinner.vue";
 export default {
   name: "Navbar",
   components: {
-    Spinner
-  }
+    Spinner,
+  },
 };
 </script>

@@ -158,21 +158,6 @@ export default {
     const { ID } = this.$route.params;
 
     try {
-      const activityMetrics = await this.$http.fetchRetry(
-        `/api/v1/metric?ID=${ID}`,
-        {},
-        // retry if no data is returned
-        (data) => data === undefined
-      );
-      resultPageState.setActivityMetrics({
-        data: activityMetrics,
-        error: false,
-      });
-    } catch (err) {
-      reusltPageState.setActivityMetrics({ data: {}, error: true });
-    }
-
-    try {
       const activityChart = await this.$http.fetchRetry(
         `/api/v1/activityChart?ID=${ID}`,
         {},
@@ -181,6 +166,21 @@ export default {
       resultPageState.setActivityChart({ data: activityChart, error: false });
     } catch (err) {
       resultPageState.setActivityChart({ data: [], error: true });
+    }
+
+    try {
+      const activityMetrics = await this.$http.fetchRetry(
+        `/api/v1/metric?ID=${ID}`,
+        {},
+        // retry if no data is returned
+        (data) => data.InSeconds === 0
+      );
+      resultPageState.setActivityMetrics({
+        data: activityMetrics,
+        error: false,
+      });
+    } catch (err) {
+      reusltPageState.setActivityMetrics({ data: {}, error: true });
     }
 
     this.loading = false;

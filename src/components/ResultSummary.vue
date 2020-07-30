@@ -82,7 +82,6 @@ export default {
   beforeMount: async function () {
     try {
       let initDetails = await this.getSearchDetails();
-      console.log("the initDetails:", initDetails);
       this.searchDetails = initDetails;
     } catch (err) {
       this.error = true;
