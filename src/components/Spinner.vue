@@ -15,22 +15,33 @@ import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 
 export const spinnerState = {
   state: {
-    loading: false
+    loading: false,
+    timeout: null,
   },
   setLoading(isLoading) {
-    this.state.loading = isLoading;
-  }
+    if (isLoading) {
+      this.state.timeout = setTimeout(() => {
+        if (this.state.timeout !== null) {
+          this.state.loading = true;
+        }
+      }, 500);
+    } else {
+      this.state.loading = isLoading;
+      clearTimeout(this.state.timeout);
+      this.state.timeout = null;
+    }
+  },
 };
 
 export default {
   name: "Spinner",
   components: {
-    ClipLoader
+    ClipLoader,
   },
   data() {
     return {
-      sharedState: spinnerState.state
+      sharedState: spinnerState.state,
     };
-  }
+  },
 };
 </script>

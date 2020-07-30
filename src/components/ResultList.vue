@@ -16,10 +16,23 @@
   margin-bottom: 0.5em;
 }
 
+.listitem-toprow {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-right: 0.3em;
+}
+
 .listitem-title {
   font-size: 1em;
   font-weight: bold;
   padding: 0.2em 0.2em 0.2em 0.2em;
+}
+
+.new-indicator {
+  color: red;
+  font-size: 0.8em;
 }
 
 .listitem-date {
@@ -39,6 +52,21 @@
 .button {
   float: right;
 }
+
+.slide-in {
+  position: relative;
+  animation: animateleft 0.4s;
+}
+@keyframes animateleft {
+  from {
+    left: -300px;
+    opacity: 0;
+  }
+  to {
+    left: 0;
+    opacity: 1;
+  }
+}
 </style>
 
 <template>
@@ -46,9 +74,12 @@
     <Error v-if="error" />
     <ul>
       <li v-for="(listing) in resultListPreview" v-bind:key="listing.URL">
-        <div class="result-listitem">
+        <div class="result-listitem slide-in">
           <div>
-            <div class="listitem-title">{{ listing.Title }}</div>
+            <div class="listitem-toprow">
+              <div class="listitem-title">{{ listing.Title }}</div>
+              <div v-if="listing.isNew" class="new-indicator">new</div>
+            </div>
             <div class="listitem-date">{{ formatDate(listing.UnixDate*1000) }}</div>
           </div>
           <hr />
@@ -138,6 +169,10 @@ export default {
         // let these go without setting error
         const updatedResultList = await this.getResultList();
 
+        updatedResultList.forEach((item) => {
+          item.isNew = true;
+        });
+
         if (updatedResultList.length) {
           this.unixDate = updatedResultList[0].UnixDate;
           this.resultList = updatedResultList.concat(this.resultList);
@@ -145,7 +180,7 @@ export default {
             this.resultListPreview
           );
         }
-      }, 60000);
+      }, 5000);
     },
     stopPolling: function () {
       // the next two lined must always be grouped together
