@@ -17,3 +17,24 @@ create table if not exists listing (
     price text,
     hood text
 );
+
+create or replace function _final_median(numeric[])
+   returns numeric as
+$$
+   select avg(val)
+   from (
+     select val
+     from unnest($1) val
+     order by 1
+     limit  2 - mod(array_upper($1, 1), 2)
+     offset ceil(array_upper($1, 1) / 2.0) - 1
+   ) sub;
+$$
+language 'sql' immutable;
+
+create aggregate median(numeric) (
+  sfunc=array_append,
+  stype=numeric[],
+  finalfunc=_final_median,
+  initcond='{}'
+);
