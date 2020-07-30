@@ -108,7 +108,9 @@
           <RepostMetric />
           <PostVsRepost />
         </div>
+
         <ActivityChart />
+        <Distribution />
       </div>
       <div class="column post-left">
         <br />
@@ -127,6 +129,7 @@ import RepostMetric from "./components/metrics/RepostMetric.vue";
 import PostVsRepost from "./components/metrics/PostVsRepost.vue";
 
 import ActivityChart from "./components/charts/ActivityChart.vue";
+import Distribution from "./components/Distribution.vue";
 
 export const resultPageState = {
   state: {
@@ -153,6 +156,7 @@ export default {
     RepostMetric,
     PostVsRepost,
     ActivityChart,
+    Distribution,
   },
   beforeMount: async function () {
     const { ID } = this.$route.params;
