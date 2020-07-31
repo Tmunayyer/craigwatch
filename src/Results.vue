@@ -110,7 +110,7 @@
         </div>
 
         <ActivityChart />
-        <Distribution />
+        <PriceDistribution />
       </div>
       <div class="column post-left">
         <br />
@@ -129,7 +129,7 @@ import RepostMetric from "./components/metrics/RepostMetric.vue";
 import PostVsRepost from "./components/metrics/PostVsRepost.vue";
 
 import ActivityChart from "./components/charts/ActivityChart.vue";
-import Distribution from "./components/Distribution.vue";
+import PriceDistribution from "./components/charts/PriceDistribution.vue";
 
 export const resultPageState = {
   state: {
@@ -138,12 +138,19 @@ export const resultPageState = {
       data: [],
       error: false,
     },
+    priceDistribution: {
+      data: {},
+      error: false,
+    },
   },
   setActivityMetrics: function (data) {
     this.state.activityMetrics = data;
   },
   setActivityChart: function (data) {
     this.state.activityChart = data;
+  },
+  setPriceDistribution: function (data) {
+    this.state.priceDistribution = data;
   },
 };
 
@@ -156,7 +163,7 @@ export default {
     RepostMetric,
     PostVsRepost,
     ActivityChart,
-    Distribution,
+    PriceDistribution,
   },
   beforeMount: async function () {
     const { ID } = this.$route.params;
@@ -170,6 +177,21 @@ export default {
       resultPageState.setActivityChart({ data: activityChart, error: false });
     } catch (err) {
       resultPageState.setActivityChart({ data: [], error: true });
+    }
+
+    try {
+      const priceDistribution = await this.$http.fetchRetry(
+        `/api/v1/priceDistribution?ID=${ID}`,
+        {},
+        // retry if no data is returned
+        (data) => data.AveragePrice === 0
+      );
+      resultPageState.setPriceDistribution({
+        data: priceDistribution,
+        error: false,
+      });
+    } catch (err) {
+      resultPageState.setPriceDistribution({ data: {}, error: true });
     }
 
     try {

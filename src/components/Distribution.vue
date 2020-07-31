@@ -54,14 +54,17 @@ export default {
     Chart,
   },
   props: {
-    seriesData: Array,
+    seriesData: Object, // AveragePrice, SampleSize, DataSet
     error: Boolean,
+  },
+  beforeMount: function () {
+    this.chartOptions.series[1].data = this.seriesData.DataSet;
   },
   data() {
     return {
       chartOptions: {
         title: {
-          text: "distribution",
+          text: "distribution sample of n",
           floating: false,
           margin: 10,
           style: {
@@ -102,6 +105,14 @@ export default {
           },
         ],
 
+        legend: {
+          enabled: false,
+        },
+
+        credits: {
+          enabled: false,
+        },
+
         series: [
           {
             name: "Bell curve",
@@ -114,7 +125,7 @@ export default {
           {
             name: "Data",
             type: "scatter",
-            data: data,
+            data: undefined,
             accessibility: {
               exposeAsGroupOnly: true,
             },

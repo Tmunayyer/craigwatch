@@ -9,6 +9,7 @@ import (
 	"time"
 
 	// postgres driver
+	"github.com/lib/pq"
 	_ "github.com/lib/pq" // here
 )
 
@@ -159,7 +160,7 @@ type activityByHour struct {
 type priceDistribution struct {
 	AveragePrice int
 	SampleSize   int
-	DataSet      []uint8
+	DataSet      []int64
 }
 
 type clListing struct {
@@ -738,6 +739,7 @@ func (c *client) getPriceDistribution(searchID int) (priceDistribution, error) {
 			from total_listings
 			where price::numeric > ((select * from median_calc) * .1)
 			and price::numeric < ((select * from median_calc) * 10)
+			order by unix_date desc
 		)
 		
 		select
@@ -756,7 +758,7 @@ func (c *client) getPriceDistribution(searchID int) (priceDistribution, error) {
 		err := rows.Scan(
 			&output.AveragePrice,
 			&output.SampleSize,
-			&output.DataSet,
+			pq.Array(&output.DataSet),
 		)
 		if err != nil {
 			return output, err
