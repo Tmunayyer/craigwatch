@@ -27,6 +27,8 @@ github.com/tmunayyer/go-craigslist v0.0.0-20200728152652-c94281094731 h1:Hlw9Afp
 github.com/tmunayyer/go-craigslist v0.0.0-20200728152652-c94281094731/go.mod h1:bzMXEvhHGo/9r2ma7LsdQMY8YVIF5VmtWzc0TB9VMuA=
 github.com/tmunayyer/go-craigslist v0.0.0-20200728183257-c9773b22b71a h1:GIfIV+YHIfmDKo5ir/uwaYmu20LfIEzfWNX+O82d5Y4=
 github.com/tmunayyer/go-craigslist v0.0.0-20200728183257-c9773b22b71a/go.mod h1:bzMXEvhHGo/9r2ma7LsdQMY8YVIF5VmtWzc0TB9VMuA=
+github.com/tmunayyer/go-craigslist v0.0.0-20200810230223-7746f3f48c03 h1:2uWGghiG08yDndvjDo8rdYTCB/8H2uu8VPntZYGaQVE=
+github.com/tmunayyer/go-craigslist v0.0.0-20200810230223-7746f3f48c03/go.mod h1:bzMXEvhHGo/9r2ma7LsdQMY8YVIF5VmtWzc0TB9VMuA=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
